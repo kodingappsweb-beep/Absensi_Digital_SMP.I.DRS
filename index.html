@@ -153,37 +153,301 @@
       font-weight: 600;
     }
 
+    /* ============ KARTU BAGIAN BELAKANG (teks DIPUTAR 90° / landscape) - MODERN ============ */
+    .kts-card-back {
+      width: 54mm;
+      height: 85mm;
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
+      border: 1.5px solid #e2e8f0;
+      position: relative;
+    }
+
+    /* WRAPPER konten yang DIPUTAR 90 derajat */
+    .card-back-rotated {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 85mm;
+      height: 54mm;
+      transform: translate(-50%, -50%) rotate(90deg);
+      transform-origin: center center;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    /* HEADER modern dengan gradient + garis aksen */
+    .card-back-header {
+      background: linear-gradient(90deg, #1e40af 0%, #3b82f6 50%, #1e40af 100%);
+      color: #ffffff;
+      padding: 5px 10px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-shrink: 0;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(30, 64, 175, 0.3);
+    }
+
+    /* Garis aksen emas di bawah header */
+    .card-back-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+    }
+
+    .card-back-header .logo-back {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 2px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+
+    .card-back-header .school-name-back {
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin: 0;
+      text-transform: uppercase;
+      line-height: 1.2;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* BODY dengan layout identitas yang rapi */
+    .card-back-body {
+      padding: 7px 12px 5px 12px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .identity-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      gap: 8px;
+      padding-bottom: 3px;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+
+    .identity-row:last-of-type {
+      border-bottom: none;
+      margin-bottom: 2px;
+    }
+
+    .identity-label {
+      font-size: 7px;
+      color: #000000;  /* HITAM PEKAT */
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+      min-width: 62px;
+      background: #eff6ff;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border-left: 2px solid #3b82f6;
+    }
+
+    .identity-value {
+      font-size: 9.5px;
+      color: #000000;  /* HITAM PEKAT */
+      font-weight: 700;
+      line-height: 1.2;
+      flex-grow: 1;
+      letter-spacing: 0.2px;
+    }
+
+    /* Catatan dengan desain modern */
+    .card-note {
+      font-size: 6.5px;
+      color: #000000;  /* HITAM PEKAT */
+      font-style: italic;
+      text-align: center;
+      line-height: 1.4;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-radius: 6px;
+      border: 1px solid #f59e0b;
+      margin-top: 5px;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+    }
+
+    /* FOOTER modern dengan NPSN */
+    .card-back-footer {
+      padding: 4px 10px;
+      font-size: 6px;
+      color: #000000;  /* HITAM PEKAT */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 2px solid #1e40af;
+      background: linear-gradient(90deg, #f1f5f9 0%, #ffffff 50%, #f1f5f9 100%);
+      flex-shrink: 0;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .card-back-footer span {
+      font-weight: 800;
+      color: #1e40af;
+    }
+
+    .card-back-footer .footer-right {
+      font-size: 5.5px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+
     @page {
       size: A4 portrait;
-      margin: 0;
+      margin: 13mm 15mm;
     }
+    
+    /* ============================================================
+       CSS KHUSUS SAAT DICETAK
+       KUNCI: visibility:hidden + #print-section dipaksa di posisi 0,0
+       dengan position:absolute. Elemen lain yang tersembunyi masih
+       "makan ruang", tapi #print-section "terbang" di atasnya.
+       ============================================================ */
     @media print {
-      body * { visibility: hidden; }
-      #print-section, #print-section * { visibility: visible; }
-      #print-section {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 210mm;
-        height: 297mm;
-        display: grid !important;
-        grid-template-columns: repeat(3, 54mm) !important;
-        grid-template-rows: repeat(3, 85mm) !important;
-        gap: 8mm !important;
-        padding: 13mm 16mm !important;
-        box-sizing: border-box;
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
       }
-      .kts-card {
-        page-break-inside: avoid;
-        break-inside: avoid;
+      
+      /* Sembunyikan semua elemen (masih makan ruang, tapi tidak terlihat) */
+      body * { visibility: hidden !important; }
+      
+      /* TAMPILKAN area cetak dan isinya */
+      #print-section, #print-section * { visibility: visible !important; }
+      
+      /* PAKSA #print-section berada tepat di POJOK KIRI-ATAS halaman 1 */
+      /* position:absolute membuatnya "terbang" dan mengabaikan elemen lain */
+      #print-section {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        background: white !important;
+      }
+      
+      /* Setiap baris berisi 3 kartu dengan Flexbox */
+      .print-row {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        gap: 8mm !important;
+        margin-bottom: 8mm !important;
+        height: 85mm !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .print-row:last-child {
+        margin-bottom: 0 !important;
+      }
+      
+      /* Setiap kartu: lebar tepat 54mm, tinggi 85mm */
+      .print-row .kts-card,
+      .print-row .kts-card-back {
+        flex: 0 0 54mm !important;
+        width: 54mm !important;
+        max-width: 54mm !important;
+        height: 85mm !important;
+        margin: 0 !important;
         box-shadow: none !important;
         border: 1px solid #cbd5e1 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-        width: 54mm !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      
+      /* ELEMEN PEMISAH HALAMAN (di ANTARA halaman) */
+      .page-separator {
+        display: block !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        visibility: hidden !important;
+      }
+      
+      .no-print { display: none !important; }
+    }
+    
+    /* ============================================================
+       CSS KHUSUS TAMPILAN DI LAYAR (bukan cetak)
+       Setiap halaman tampil sebagai "kertas putih" yang berjajar
+       ============================================================ */
+    @media screen {
+      #print-section {
+        display: block !important;
+        padding: 20px !important;
+        background: #e2e8f0;
+      }
+      .print-page {
+        display: block !important;
+        position: relative !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        padding: 13mm 15mm !important;
+        box-sizing: border-box !important;
+        border: 1px solid #cbd5e1;
+        margin: 0 auto 24px auto !important;
+        background: white !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12) !important;
+        overflow: hidden !important;
+      }
+      .print-page:last-child {
+        margin-bottom: 0 !important;
+      }
+      .print-row {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        gap: 8mm !important;
+        margin-bottom: 8mm !important;
         height: 85mm !important;
       }
-      .no-print { display: none !important; }
+      .print-row:last-child {
+        margin-bottom: 0 !important;
+      }
+      .print-row .kts-card,
+      .print-row .kts-card-back {
+        flex: 0 0 54mm !important;
+        width: 54mm !important;
+        max-width: 54mm !important;
+        height: 85mm !important;
+        margin: 0 !important;
+      }
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -203,8 +467,11 @@
   <div id="auth-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border space-y-6">
       <div class="text-center space-y-2">
-        <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold shadow-inner"><i class="fa-solid fa-school"></i></div>
-        <h2 class="text-2xl font-extrabold text-slate-800">Login Sistem Absensi</h2>
+        <div id="login-logo-wrapper" class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold shadow-inner overflow-hidden">
+          <img id="login-logo-img" src="" class="w-full h-full object-contain p-2" alt="Logo Sekolah" onerror="this.style.display='none'">
+          <i id="login-logo-default" class="fa-solid fa-school"></i>
+        </div>
+        <h2 id="login-title" class="text-2xl font-extrabold text-slate-800">Login Sistem Absensi</h2>
         <p class="text-xs text-slate-500">Pilih akses login Anda (Admin atau Guru Mapel)</p>
       </div>
 
@@ -513,6 +780,12 @@
                 <option value="SISWA">Kartu Siswa (KTS)</option>
                 <option value="GURU">Kartu Guru (KTG)</option>
               </select>
+              <span class="text-xs font-semibold text-slate-500 ml-2">Bagian:</span>
+              <select id="kts-side-filter" onchange="renderKtsCards()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+                <option value="DEPAN">Bagian Depan</option>
+                <option value="BELAKANG">Bagian Belakang</option>
+                <option value="DUA_DUA">Depan + Belakang</option>
+              </select>
               <select id="kts-class-filter" onchange="renderKtsCards()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold"></select>
               <button onclick="window.print()" class="px-5 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-md hover:bg-indigo-700 transition"><i class="fa-solid fa-print mr-1"></i> Cetak Kartu</button>
             </div>
@@ -597,30 +870,30 @@
       <!-- REKAP ABSENSI VIEW -->
       <section id="view-rekap" class="page-view space-y-6 hidden">
         <div class="bg-white rounded-3xl border shadow-xs overflow-hidden">
-          <div class="p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
+          <div class="p-6 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="shrink-0">
               <h3 class="font-bold text-slate-800 text-lg">Rekapitulasi Absensi & Agenda (Realtime)</h3>
               <p class="text-xs text-slate-500">Filter lengkap berdasarkan waktu, nama, kelas, peran, mapel, dan jenis sesi</p>
             </div>
-            <div class="flex flex-wrap items-center gap-3">
-              <input type="date" id="rekap-date-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
-              <input type="text" id="rekap-name-search" placeholder="Cari nama..." oninput="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs">
-              <select id="rekap-class-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold"></select>
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start lg:justify-end">
+              <input type="date" id="rekap-date-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[130px]">
+              <input type="text" id="rekap-name-search" placeholder="Cari nama..." oninput="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs min-w-[130px]">
+              <select id="rekap-class-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[120px]"></select>
               
               <!-- Filter Mapel (Mata Pelajaran) -->
-              <select id="rekap-mapel-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="rekap-mapel-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[130px]">
                 <option value="ALL">Semua Mapel</option>
               </select>
 
               <!-- Filter Peran (Hanya Muncul untuk Admin) -->
-              <select id="rekap-role-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="rekap-role-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[150px]">
                 <option value="ALL">Semua Peran (Guru & Siswa)</option>
                 <option value="Guru">Guru</option>
                 <option value="Siswa">Siswa</option>
               </select>
 
               <!-- Filter Jenis Sesi Absensi (Hanya Muncul untuk Admin) -->
-              <select id="rekap-session-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="rekap-session-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[150px]">
                 <option value="ALL">Semua Jenis Sesi</option>
                 <option value="Masuk Sekolah">Masuk Sekolah</option>
                 <option value="Shalat Duha">Shalat Duha</option>
@@ -783,7 +1056,7 @@
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMA NEGERI 1 EDUKASI', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMK Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -793,6 +1066,7 @@
     let currentActiveView = 'dashboard';
     let pieChartInstance = null;
     let editingSiswaNisn = null, editingGuruNip = null;
+    let isWritingToBackend = false; // Flag kunci: true saat sedang simpan/hapus/import
 
     // ==== FUNGSI PENYIMPANAN SESI LOGIN (localStorage) ====
     function saveSessionToStorage() {
@@ -846,7 +1120,7 @@
       updateLiveClock(); 
       setInterval(updateLiveClock, 1000); 
       initApp();
-      setInterval(syncDataRealtime, 5000);
+      setInterval(syncDataRealtime, 30000); // Diperpanjang dari 5s ke 30s untuk stabilitas
     });
 
     function getTodayLocalDateStr() {
@@ -881,17 +1155,24 @@
       const statusText = document.getElementById('sync-status-text');
       if (statusText) statusText.innerText = "Syncing...";
 
+      // Daftar action yang merupakan operasi TULIS (harus kunci sync otomatis)
+      const writeActions = ['saveSiswa', 'saveGuru', 'deleteSiswa', 'deleteGuru', 'saveKelas', 'deleteKelas', 'savePengaturan', 'saveAbsensi', 'importSiswaData'];
+      const isWriteAction = writeActions.includes(actionName);
+      if (isWriteAction) isWritingToBackend = true;
+
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         let runner = google.script.run
           .withSuccessHandler((res) => {
             if (statusText) statusText.innerText = "GAS Active";
             if (res) applyBackendData(res);
             if (callback) callback(res);
+            if (isWriteAction) { isWritingToBackend = false; syncDataRealtime(); } // Sync ulang setelah tulis selesai
           })
           .withFailureHandler((err) => {
             if (statusText) statusText.innerText = "Error";
             console.error("GAS Error:", err);
             showToast("Gagal memproses ke GAS Backend", "error");
+            if (isWriteAction) isWritingToBackend = false;
           });
         
         if (param !== undefined) {
@@ -910,13 +1191,19 @@
           if (statusText) statusText.innerText = "Online";
           if (res) applyBackendData(res);
           if (callback) callback(res);
+          if (isWriteAction) { isWritingToBackend = false; syncDataRealtime(); } // Sync ulang setelah tulis selesai
         })
         .catch(err => {
           if (statusText) statusText.innerText = "Offline";
           console.error("Fetch Error:", err);
           showToast("Gagal terhubung ke Server GAS", "error");
+          if (isWriteAction) isWritingToBackend = false;
         });
       }
+      
+      // Pastikan container tidak memiliki styling tinggi yang mengganggu
+      container.style.height = '';
+      container.style.position = '';
     }
 
     function applyBackendData(data) {
@@ -940,11 +1227,57 @@
       if (data.users) adminUsers = data.users;
 
       applySchoolProfileUI();
+      applySchoolProfileToLogin(); // Terapkan juga ke layar login
       updateAllDropdowns();
       refreshCurrentViewData();
     }
 
+    // ==== TERAPKAN PROFIL SEKOLAH KE HALAMAN LOGIN ====
+    function applySchoolProfileToLogin() {
+      const p = schoolProfile;
+      if (!p) return;
+
+      // Ubah JUDUL di layar login
+      const loginTitle = document.getElementById('login-title');
+      if (loginTitle && p.namaSekolah) {
+        loginTitle.textContent = 'Absensi ' + p.namaSekolah;
+      } else if (loginTitle && p.nama) {
+        loginTitle.textContent = 'Absensi ' + p.nama;
+      }
+
+      // Ubah LOGO di layar login
+      const loginLogoImg = document.getElementById('login-logo-img');
+      const loginLogoDefault = document.getElementById('login-logo-default');
+      const logoUrl = p.logoUrl || p.logo || '';
+      
+      if (loginLogoImg && logoUrl) {
+        loginLogoImg.src = logoUrl;
+        loginLogoImg.style.display = 'block';
+        if (loginLogoDefault) loginLogoDefault.style.display = 'none';
+      }
+
+      // Ubah juga logo di sidebar & mobile header
+      const sidebarLogo = document.getElementById('sidebar-logo-img');
+      const mobileLogo = document.getElementById('mobile-logo-img');
+      const drawerLogo = document.getElementById('drawer-logo-img');
+      
+      if (sidebarLogo && logoUrl) sidebarLogo.src = logoUrl;
+      if (mobileLogo && logoUrl) mobileLogo.src = logoUrl;
+      if (drawerLogo && logoUrl) drawerLogo.src = logoUrl;
+
+      // Ubah nama sekolah di sidebar & mobile
+      const sidebarSchoolName = document.getElementById('sidebar-school-name');
+      const mobileSchoolName = document.getElementById('mobile-school-name');
+      const namaSekolah = p.namaSekolah || p.nama || '';
+      
+      if (sidebarSchoolName && namaSekolah) sidebarSchoolName.textContent = namaSekolah;
+      if (mobileSchoolName && namaSekolah) mobileSchoolName.textContent = namaSekolah;
+    }
+
     function initApp() {
+      // Terapkan profil sekolah ke layar login SEGERA saat aplikasi dimuat
+      applySchoolProfileToLogin();
+      
       const todayDateFilter = document.getElementById('rekap-date-filter');
       if (todayDateFilter) todayDateFilter.value = getTodayLocalDateStr();
       const todayBelumFilter = document.getElementById('belum-date-filter');
@@ -974,6 +1307,8 @@
     }
 
     function syncDataRealtime() {
+      // Jangan sync otomatis jika sedang ada operasi tulis ke backend
+      if (isWritingToBackend) return;
       callGasBackend('getInitialData');
     }
 
@@ -1782,8 +2117,11 @@
       container.innerHTML = '';
 
       const typeFilter = document.getElementById('kts-type-filter')?.value || 'SISWA';
+      const sideFilter = document.getElementById('kts-side-filter')?.value || 'DEPAN';
       const classFilter = document.getElementById('kts-class-filter')?.value || 'ALL';
       const logoSrc = schoolProfile.logoUrl && schoolProfile.logoUrl.trim() !== '' ? schoolProfile.logoUrl : DEFAULT_LOGO_SVG;
+      const namaSekolah = schoolProfile.namaSekolah || schoolProfile.nama || 'Sekolah';
+      const npsnSekolah = schoolProfile.npsn || '-';
 
       let listData = [];
       if (typeFilter === 'SISWA') {
@@ -1794,7 +2132,9 @@
           nama: s.nama,
           infoBadge: `Kelas: ${s.kelas}`,
           idLabel: 'ID',
-          foto: s.fotoUrl && s.fotoUrl.trim() !== '' ? s.fotoUrl : DEFAULT_AVATAR_SVG
+          foto: s.fotoUrl && s.fotoUrl.trim() !== '' ? s.fotoUrl : DEFAULT_AVATAR_SVG,
+          jk: s.jk || 'L',
+          isSiswa: true
         }));
       } else {
         listData = teachers.map(g => ({
@@ -1804,64 +2144,158 @@
           nama: g.nama,
           infoBadge: null,
           idLabel: 'ID',
-          foto: g.fotoUrl && g.fotoUrl.trim() !== '' ? g.fotoUrl : DEFAULT_AVATAR_SVG
+          foto: g.fotoUrl && g.fotoUrl.trim() !== '' ? g.fotoUrl : DEFAULT_AVATAR_SVG,
+          jk: g.jk || 'L',
+          isSiswa: false
         }));
       }
+
+      // Jika pilih DUA_DUA, duplikasi data: depan dulu, lalu belakang
+      let renderList = [];
+      if (sideFilter === 'DUA_DUA') {
+        // Bagian DEPAN dulu
+        listData.forEach(item => renderList.push({ ...item, side: 'DEPAN' }));
+        // Lalu bagian BELAKANG
+        listData.forEach(item => renderList.push({ ...item, side: 'BELAKANG' }));
+      } else {
+        listData.forEach(item => renderList.push({ ...item, side: sideFilter }));
+      }
+      listData = renderList;
 
       if (listData.length === 0) {
         container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-semibold">Tidak ada data untuk dicetak. Silakan pilih kategori/kelas lain.</div>`;
         return;
       }
 
-      listData.forEach((item, index) => {
-        const cardContainerId = `qr-card-item-${index}`;
-        const infoBadgeHtml = item.infoBadge ? `<div class="info-badge">${item.infoBadge}</div>` : '';
+      // Bagi kartu menjadi kelompok-kelompok: 1 halaman = 3 baris × 3 kartu = 9 kartu
+      const CARDS_PER_PAGE = 9;
+      const CARDS_PER_ROW = 3;
+      const totalPages = Math.ceil(listData.length / CARDS_PER_PAGE);
+      
+      for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+        const pageStart = pageIdx * CARDS_PER_PAGE;
+        const pageEnd = Math.min(pageStart + CARDS_PER_PAGE, listData.length);
+        const pageItems = listData.slice(pageStart, pageEnd);
+        
+        // Bungkus setiap halaman dalam .print-page
+        // Menggunakan page-break-after: always untuk memisahkan halaman cetak
+        const pageWrapperId = `print-page-${pageIdx}`;
+        container.insertAdjacentHTML('beforeend', `<div class="print-page" id="${pageWrapperId}"></div>`);
+        const pageContainer = document.getElementById(pageWrapperId);
+        
+        // Bagi halaman menjadi 3 baris, masing-masing 3 kartu
+        for (let rowIdx = 0; rowIdx < 3; rowIdx++) {
+          const rowStart = rowIdx * CARDS_PER_ROW;
+          const rowEnd = Math.min(rowStart + CARDS_PER_ROW, pageItems.length);
+          if (rowStart >= pageItems.length) break;
+          
+          const rowItems = pageItems.slice(rowStart, rowEnd);
+          
+          // Bungkus setiap baris dalam .print-row (Flexbox 3 kolom)
+          const rowWrapperId = `print-page-${pageIdx}-row-${rowIdx}`;
+          pageContainer.insertAdjacentHTML('beforeend', `<div class="print-row" id="${rowWrapperId}"></div>`);
+          const rowContainer = document.getElementById(rowWrapperId);
+          
+          rowItems.forEach((item, idxInRow) => {
+            const globalIndex = pageStart + rowStart + idxInRow;
+            const cardContainerId = `qr-card-item-${globalIndex}`;
+            const infoBadgeHtml = item.infoBadge ? `<div class="info-badge">${item.infoBadge}</div>` : '';
 
-        const cardHtml = `
-          <div class="kts-card">
-            <div class="card-header ${item.headerClass}">
-              <img src="${logoSrc}" alt="Logo" class="logo">
-              <h2>${schoolProfile.namaSekolah}</h2>
-              <div class="badge-title">${item.badgeTitle}</div>
-            </div>
-
-            <div class="card-body">
-              <div class="photo-frame">
-                <img src="${item.foto}" alt="${item.nama}" onerror="this.src='${DEFAULT_AVATAR_SVG}'">
+            let cardHtml;
+            if (item.side === 'BELAKANG') {
+              // ==== KARTU BAGIAN BELAKANG (teks DIPUTAR 90° / landscape) ====
+              const jkLabel = item.jk === 'P' || item.jk === 'Perempuan' ? 'Perempuan' : 'Laki-laki';
+              const idLabelBack = item.isSiswa ? 'NISN' : 'NIK';
+              cardHtml = `
+                <div class="kts-card-back">
+                  <div class="card-back-rotated">
+                    <div class="card-back-header">
+                      <img src="${logoSrc}" alt="Logo" class="logo-back">
+                      <div class="school-name-back">${namaSekolah}</div>
+                    </div>
+                    <div class="card-back-body">
+                      <div class="identity-row">
+                        <div class="identity-label">Nama:</div>
+                        <div class="identity-value">${item.nama}</div>
+                      </div>
+                      <div class="identity-row">
+                        <div class="identity-label">${idLabelBack}:</div>
+                        <div class="identity-value">${item.id}</div>
+                      </div>
+                      <div class="identity-row">
+                        <div class="identity-label">Jenis Kelamin:</div>
+                        <div class="identity-value">${jkLabel}</div>
+                      </div>
+                      <div class="card-note">
+                        Kartu ini berlaku selama menjadi ${item.isSiswa ? 'peserta didik' : 'guru/tendik'} ${namaSekolah}.
+                      </div>
+                    </div>
+                    <div class="card-back-footer">
+                      <span>NPSN: ${npsnSekolah}</span>
+                      <span class="footer-right">© ${namaSekolah}</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            } else {
+              // ==== KARTU BAGIAN DEPAN (seperti biasa) ====
+              cardHtml = `
+                <div class="kts-card">
+              <div class="card-header ${item.headerClass}">
+                <img src="${logoSrc}" alt="Logo" class="logo">
+                <h2>${schoolProfile.namaSekolah}</h2>
+                <div class="badge-title">${item.badgeTitle}</div>
               </div>
 
-              <div class="user-name">${item.nama}</div>
-              <div class="user-id">${item.idLabel}: <span>${item.id}</span></div>
-              ${infoBadgeHtml}
+              <div class="card-body">
+                <div class="photo-frame">
+                  <img src="${item.foto}" alt="${item.nama}" onerror="this.src='${DEFAULT_AVATAR_SVG}'">
+                </div>
 
-              <div class="qr-section">
-                <div id="${cardContainerId}"></div>
+                <div class="user-name">${item.nama}</div>
+                <div class="user-id">${item.idLabel}: <span>${item.id}</span></div>
+                ${infoBadgeHtml}
+
+                <div class="qr-section">
+                  <div id="${cardContainerId}"></div>
+                </div>
+              </div>
+
+              <div class="card-footer">
+                <span>NPSN: ${schoolProfile.npsn || '20123456'}</span>
+                <span>QR SYSTEM</span>
               </div>
             </div>
+          `;
+            }
+            rowContainer.insertAdjacentHTML('beforeend', cardHtml);
 
-            <div class="card-footer">
-              <span>NPSN: ${schoolProfile.npsn || '20123456'}</span>
-              <span>QR SYSTEM</span>
-            </div>
-          </div>
-        `;
-        container.insertAdjacentHTML('beforeend', cardHtml);
-
-        setTimeout(() => {
-          const qrTarget = document.getElementById(cardContainerId);
-          if (qrTarget) {
-            qrTarget.innerHTML = '';
-            new QRCode(qrTarget, {
-              text: String(item.id),
-              width: 60,
-              height: 60,
-              colorDark: "#0f172a",
-              colorLight: "#ffffff",
-              correctLevel: QRCode.CorrectLevel.H
-            });
-          }
-        }, 50);
-      });
+            setTimeout(() => {
+              const qrTarget = document.getElementById(cardContainerId);
+              if (qrTarget) {
+                qrTarget.innerHTML = '';
+                new QRCode(qrTarget, {
+                  text: String(item.id),
+                  width: 60,
+                  height: 60,
+                  colorDark: "#0f172a",
+                  colorLight: "#ffffff",
+                  correctLevel: QRCode.CorrectLevel.H
+                });
+              }
+            }, 50);
+          });
+        }
+        
+        // TAMBAHKAN ELEMEN PEMISAH HALAMAN (hanya DI ANTARA halaman, bukan setelah terakhir)
+        if (pageIdx < totalPages - 1) {
+          container.insertAdjacentHTML('beforeend', '<div class="page-separator"></div>');
+        }
+      }
+      
+      // Bersihkan styling container yang tidak perlu
+      container.style.height = '';
+      container.style.position = '';
     }
 
     /* ============ REKAP ABSENSI LOGIC ============ */
@@ -2191,9 +2625,8 @@
         students.push(siswaData);
       }
 
-      // Kirim SELURUH daftar siswa ke backend untuk sinkronisasi penuh
-      // Gunakan action 'simpanSiswa' dengan format { list: students }
-      callGasBackend('simpanSiswa', { list: students });
+      // Kirim SATU data siswa ke backend (action harus sesuai dengan GAS: 'saveSiswa')
+      callGasBackend('saveSiswa', siswaData);
       closeSiswaModal();
       renderSiswaTable();
       showToast("Data siswa berhasil disimpan!");
@@ -2202,7 +2635,7 @@
     function deleteSiswa(nisn) {
       if (!confirm(`Yakin ingin menghapus siswa NISN ${nisn}?`)) return;
       students = students.filter(s => String(s.nisn) !== String(nisn));
-      callGasBackend('deleteSiswa', { nisn: nisn });
+      callGasBackend('deleteSiswa', nisn); // Kirim STRING langsung (sesuai harapan GAS)
       renderSiswaTable();
       showToast("Data siswa berhasil dihapus!");
     }
@@ -2318,9 +2751,8 @@
         teachers.push(guruData);
       }
 
-      // Kirim SELURUH daftar guru ke backend untuk sinkronisasi penuh
-      // Gunakan action 'simpanGuru' dengan format { list: teachers }
-      callGasBackend('simpanGuru', { list: teachers });
+      // Kirim SATU data guru ke backend (action harus sesuai dengan GAS: 'saveGuru')
+      callGasBackend('saveGuru', guruData);
       closeGuruModal();
       renderGuruTable();
       updateMapelDropdowns();
@@ -2330,7 +2762,7 @@
     function deleteGuru(nip) {
       if (!confirm(`Yakin ingin menghapus guru NIP ${nip}?`)) return;
       teachers = teachers.filter(g => String(g.nip) !== String(nip));
-      callGasBackend('deleteGuru', { nip: nip });
+      callGasBackend('deleteGuru', nip); // Kirim STRING langsung (sesuai harapan GAS)
       renderGuruTable();
       updateMapelDropdowns();
       showToast("Data guru berhasil dihapus!");
@@ -2367,7 +2799,7 @@
       }
 
       classList.push(nama);
-      callGasBackend('saveKelas', { nama: nama });
+      callGasBackend('saveKelas', nama); // Kirim STRING langsung (sesuai harapan GAS)
       document.getElementById('input-nama-kelas').value = '';
       updateAllDropdowns();
       renderKelasTable();
@@ -2377,7 +2809,7 @@
     function deleteKelas(nama) {
       if (!confirm(`Yakin ingin menghapus kelas ${nama}?`)) return;
       classList = classList.filter(k => k !== nama);
-      callGasBackend('deleteKelas', { nama: nama });
+      callGasBackend('deleteKelas', nama); // Kirim STRING langsung (sesuai harapan GAS)
       updateAllDropdowns();
       renderKelasTable();
       showToast("Kelas berhasil dihapus!");
@@ -2422,6 +2854,7 @@
         const json = XLSX.utils.sheet_to_json(worksheet);
 
         if (type === 'siswa') {
+          const siswaList = [];
           json.forEach(row => {
             const nisn = String(row.NISN || row.nisn || '').trim();
             const nama = String(row.Nama || row.nama || '').trim();
@@ -2431,14 +2864,23 @@
 
             if (nisn && nama) {
               const siswaObj = { nisn, nama, kelas, jk, nohp, fotoUrl: '' };
+              siswaList.push(siswaObj);
+              // Update state lokal juga
               const existingIdx = students.findIndex(s => String(s.nisn) === nisn);
               if (existingIdx !== -1) students[existingIdx] = siswaObj;
               else students.push(siswaObj);
-              callGasBackend('saveSiswa', siswaObj);
             }
           });
-          renderSiswaTable();
-          showToast("Berhasil mengimpor data siswa!");
+
+          if (siswaList.length > 0) {
+            // KIRIM SEMUA DATA SEKALI SAJA menggunakan action 'importSiswaData'
+            // (action ini sudah ada di GAS backend Anda)
+            callGasBackend('importSiswaData', siswaList);
+            renderSiswaTable();
+            showToast("Berhasil mengimpor " + siswaList.length + " data siswa! (Sedang menyinkronkan...)");
+          } else {
+            showToast("Tidak ada data valid di file Excel", "error");
+          }
         }
       };
       reader.readAsArrayBuffer(file);

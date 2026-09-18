@@ -870,30 +870,30 @@
       <!-- REKAP ABSENSI VIEW -->
       <section id="view-rekap" class="page-view space-y-6 hidden">
         <div class="bg-white rounded-3xl border shadow-xs overflow-hidden">
-          <div class="p-6 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div class="shrink-0">
+          <div class="p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
               <h3 class="font-bold text-slate-800 text-lg">Rekapitulasi Absensi & Agenda (Realtime)</h3>
               <p class="text-xs text-slate-500">Filter lengkap berdasarkan waktu, nama, kelas, peran, mapel, dan jenis sesi</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start lg:justify-end">
-              <input type="date" id="rekap-date-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[130px]">
-              <input type="text" id="rekap-name-search" placeholder="Cari nama..." oninput="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs min-w-[130px]">
-              <select id="rekap-class-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[120px]"></select>
+            <div class="flex flex-wrap items-center gap-3">
+              <input type="date" id="rekap-date-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <input type="text" id="rekap-name-search" placeholder="Cari nama..." oninput="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs">
+              <select id="rekap-class-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold"></select>
               
               <!-- Filter Mapel (Mata Pelajaran) -->
-              <select id="rekap-mapel-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[130px]">
+              <select id="rekap-mapel-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
                 <option value="ALL">Semua Mapel</option>
               </select>
 
               <!-- Filter Peran (Hanya Muncul untuk Admin) -->
-              <select id="rekap-role-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[150px]">
+              <select id="rekap-role-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
                 <option value="ALL">Semua Peran (Guru & Siswa)</option>
                 <option value="Guru">Guru</option>
                 <option value="Siswa">Siswa</option>
               </select>
 
               <!-- Filter Jenis Sesi Absensi (Hanya Muncul untuk Admin) -->
-              <select id="rekap-session-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[150px]">
+              <select id="rekap-session-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
                 <option value="ALL">Semua Jenis Sesi</option>
                 <option value="Masuk Sekolah">Masuk Sekolah</option>
                 <option value="Shalat Duha">Shalat Duha</option>
@@ -1056,7 +1056,7 @@
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20247282', alamat:'Blok Sindanghurip', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMK Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -2150,14 +2150,32 @@
         }));
       }
 
-      // Jika pilih DUA_DUA, duplikasi data: depan dulu, lalu belakang
+      // ==== FUNGSI: Balik urutan per BARIS (setiap 3 kartu) ====
+      // Agar saat dicetak mirror & ditempel PVC, posisi depan-belakang tepat berpasangan
+      // Contoh: [A,B,C, D,E,F, G,H,I] → [C,B,A, F,E,D, I,H,G]
+      function reversePerRow(arr, perRow = 3) {
+        const hasil = [];
+        for (let i = 0; i < arr.length; i += perRow) {
+          const baris = arr.slice(i, i + perRow);
+          hasil.push(...baris.reverse()); // Balik urutan dalam 1 baris
+        }
+        return hasil;
+      }
+
+      // Jika pilih DUA_DUA, duplikasi data: depan dulu, lalu belakang (DIBALIK per baris)
       let renderList = [];
       if (sideFilter === 'DUA_DUA') {
-        // Bagian DEPAN dulu
+        // Bagian DEPAN: urutan NORMAL
         listData.forEach(item => renderList.push({ ...item, side: 'DEPAN' }));
-        // Lalu bagian BELAKANG
-        listData.forEach(item => renderList.push({ ...item, side: 'BELAKANG' }));
+        // Bagian BELAKANG: urutan DIBALIK per baris (agar cocok saat ditempel)
+        const dataBelakangDibalik = reversePerRow(listData, 3);
+        dataBelakangDibalik.forEach(item => renderList.push({ ...item, side: 'BELAKANG' }));
+      } else if (sideFilter === 'BELAKANG') {
+        // Jika hanya cetak BELAKANG saja: langsung dibalik per baris
+        const dataDibalik = reversePerRow(listData, 3);
+        dataDibalik.forEach(item => renderList.push({ ...item, side: 'BELAKANG' }));
       } else {
+        // DEPAN saja: urutan normal
         listData.forEach(item => renderList.push({ ...item, side: sideFilter }));
       }
       listData = renderList;

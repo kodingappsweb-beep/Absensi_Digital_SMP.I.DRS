@@ -156,7 +156,7 @@
     /* ============ KARTU BAGIAN BELAKANG (teks DIPUTAR 90° / landscape) - MODERN ============ */
     .kts-card-back {
       width: 54mm;
-      height: 85mm;
+      height: 82mm;
       background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
       border-radius: 12px;
       overflow: hidden;
@@ -170,8 +170,8 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 85mm;
-      height: 54mm;
+      width: 82mm;
+      height: 52mm;
       transform: translate(-50%, -50%) rotate(90deg);
       transform-origin: center center;
       display: flex;
@@ -229,7 +229,7 @@
 
     /* BODY dengan layout identitas yang rapi */
     .card-back-body {
-      padding: 7px 12px 5px 12px;
+      padding: 5px 10px 4px 10px;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -240,9 +240,9 @@
     .identity-row {
       display: flex;
       align-items: center;
-      margin-bottom: 4px;
-      gap: 8px;
-      padding-bottom: 3px;
+      margin-bottom: 3px;
+      gap: 6px;
+      padding-bottom: 2px;
       border-bottom: 1px dashed #cbd5e1;
     }
 
@@ -285,9 +285,10 @@
       background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
       border-radius: 6px;
       border: 1px solid #f59e0b;
-      margin-top: 5px;
+      margin-top: 3px;
       font-weight: 600;
       box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+      padding: 3px 6px;
     }
 
     /* FOOTER modern dengan NPSN */
@@ -362,12 +363,14 @@
         justify-content: space-between !important;
         align-items: flex-start !important;
         gap: 8mm !important;
-        margin-bottom: 8mm !important;
-        height: 85mm !important;
+        margin-bottom: 6mm !important;
+        height: 82mm !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        overflow: hidden !important;
       }
-      .print-row:last-child {
+      .print-row:last-child,
+      .print-row:last-of-type {
         margin-bottom: 0 !important;
       }
       
@@ -377,7 +380,7 @@
         flex: 0 0 54mm !important;
         width: 54mm !important;
         max-width: 54mm !important;
-        height: 85mm !important;
+        height: 82mm !important;
         margin: 0 !important;
         box-shadow: none !important;
         border: 1px solid #cbd5e1 !important;
@@ -385,6 +388,47 @@
         print-color-adjust: exact;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        overflow: hidden !important;
+        position: relative !important;
+      }
+      
+      /* ==== ATURAN KHUSUS KARTU BELAKANG YANG DIPUTAR 90° ==== */
+      /* WAJIB ada di @media print agar rotasi berfungsi saat dicetak */
+      .print-row .kts-card-back .card-back-rotated {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        width: 82mm !important;
+        height: 52mm !important;
+        transform: translate(-50%, -50%) rotate(90deg) !important;
+        transform-origin: center center !important;
+        display: flex !important;
+        flex-direction: column !important;
+        background-color: #ffffff !important;
+        overflow: hidden !important;
+        visibility: visible !important;
+      }
+      .print-row .kts-card-back .card-back-header {
+        display: flex !important;
+        flex-direction: row !important;
+        visibility: visible !important;
+      }
+      .print-row .kts-card-back .card-back-body {
+        display: flex !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+      }
+      .print-row .kts-card-back .identity-row {
+        display: flex !important;
+        flex-direction: row !important;
+        visibility: visible !important;
+      }
+      .print-row .kts-card-back .card-back-footer {
+        display: flex !important;
+        visibility: visible !important;
+      }
+      .print-row .kts-card-back * {
+        visibility: visible !important;
       }
       
       /* ELEMEN PEMISAH HALAMAN (di ANTARA halaman) */
@@ -434,10 +478,11 @@
         justify-content: space-between !important;
         align-items: flex-start !important;
         gap: 8mm !important;
-        margin-bottom: 8mm !important;
-        height: 85mm !important;
+        margin-bottom: 6mm !important;
+        height: 82mm !important;
       }
-      .print-row:last-child {
+      .print-row:last-child,
+      .print-row:last-of-type {
         margin-bottom: 0 !important;
       }
       .print-row .kts-card,
@@ -445,7 +490,7 @@
         flex: 0 0 54mm !important;
         width: 54mm !important;
         max-width: 54mm !important;
-        height: 85mm !important;
+        height: 82mm !important;
         margin: 0 !important;
       }
     }
@@ -870,30 +915,30 @@
       <!-- REKAP ABSENSI VIEW -->
       <section id="view-rekap" class="page-view space-y-6 hidden">
         <div class="bg-white rounded-3xl border shadow-xs overflow-hidden">
-          <div class="p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
+          <div class="p-6 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="shrink-0">
               <h3 class="font-bold text-slate-800 text-lg">Rekapitulasi Absensi & Agenda (Realtime)</h3>
               <p class="text-xs text-slate-500">Filter lengkap berdasarkan waktu, nama, kelas, peran, mapel, dan jenis sesi</p>
             </div>
-            <div class="flex flex-wrap items-center gap-3">
-              <input type="date" id="rekap-date-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
-              <input type="text" id="rekap-name-search" placeholder="Cari nama..." oninput="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs">
-              <select id="rekap-class-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold"></select>
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start lg:justify-end">
+              <input type="date" id="rekap-date-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[130px]">
+              <input type="text" id="rekap-name-search" placeholder="Cari nama..." oninput="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs min-w-[130px]">
+              <select id="rekap-class-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[120px]"></select>
               
               <!-- Filter Mapel (Mata Pelajaran) -->
-              <select id="rekap-mapel-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="rekap-mapel-filter" onchange="renderRekapTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[130px]">
                 <option value="ALL">Semua Mapel</option>
               </select>
 
               <!-- Filter Peran (Hanya Muncul untuk Admin) -->
-              <select id="rekap-role-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="rekap-role-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[150px]">
                 <option value="ALL">Semua Peran (Guru & Siswa)</option>
                 <option value="Guru">Guru</option>
                 <option value="Siswa">Siswa</option>
               </select>
 
               <!-- Filter Jenis Sesi Absensi (Hanya Muncul untuk Admin) -->
-              <select id="rekap-session-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="rekap-session-filter" onchange="renderRekapTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold min-w-[150px]">
                 <option value="ALL">Semua Jenis Sesi</option>
                 <option value="Masuk Sekolah">Masuk Sekolah</option>
                 <option value="Shalat Duha">Shalat Duha</option>
@@ -1056,7 +1101,7 @@
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20247282', alamat:'Blok Sindanghurip Desa Maniis', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMK Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -1325,6 +1370,14 @@
           el.value = curVal;
         }
       });
+
+      // Isi dropdown kelas guru (agenda-selected-class)
+      const agendaClassSel = document.getElementById('agenda-selected-class');
+      if (agendaClassSel) {
+        const curVal = agendaClassSel.value || '';
+        agendaClassSel.innerHTML = classOptionsOnly;
+        if (curVal) agendaClassSel.value = curVal;
+      }
 
       const fk = document.getElementById('form-kelas');
       if (fk) fk.innerHTML = classOptionsOnly;
@@ -1645,11 +1698,19 @@
 
       const classSelectorWrapper = document.getElementById('teacher-class-selector-wrapper');
       const agendaClassSel = document.getElementById('agenda-selected-class');
-      if (currentLoggedTeacher.kelas === 'Semua') {
-        classSelectorWrapper.classList.remove('hidden');
-        agendaClassSel.innerHTML = classList.map(k => `<option value="${k}">${k}</option>`).join('');
-      } else {
-        classSelectorWrapper.classList.add('hidden');
+      // Selalu tampilkan dropdown kelas (jangan hidden)
+      if (classSelectorWrapper) classSelectorWrapper.classList.remove('hidden');
+      // Isi dropdown: jika classList kosong, ambil dari data siswa
+      let kelasOptions = classList && classList.length > 0 ? classList : [];
+      if (kelasOptions.length === 0 && students && students.length > 0) {
+        kelasOptions = [...new Set(students.map(s => s.kelas).filter(k => k))].sort();
+      }
+      if (agendaClassSel && kelasOptions.length > 0) {
+        agendaClassSel.innerHTML = kelasOptions.map(k => `<option value="${k}">${k}</option>`).join('');
+        // Jika guru punya kelas tertentu, pilihkan sebagai default
+        if (currentLoggedTeacher && currentLoggedTeacher.kelas && currentLoggedTeacher.kelas !== 'Semua') {
+          agendaClassSel.value = currentLoggedTeacher.kelas;
+        }
       }
     }
 
@@ -1762,7 +1823,7 @@
           console.warn("Camera list fetch warning:", err);
         }
 
-        const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+        const config = { fps: 20, qrbox: { width: 250, height: 250 }, useBarCodeDetectorIfSupported: true, aspectRatio: 1.333 };
 
         try {
           if (selectedAgendaCameraId) {
@@ -1771,7 +1832,7 @@
             await html5QrAgenda.start({ facingMode: "environment" }, config, (txt) => processAgendaScan(txt), () => {});
           }
         } catch (err1) {
-          await html5QrAgenda.start({ facingMode: "user" }, config, (txt) => processAgendaScan(txt), () => {});
+          await html5QrAgenda.start({ facingMode: "environment" }, config, (txt) => processAgendaScan(txt), () => {});
         }
 
         isAgendaCamActive = true;
@@ -1802,6 +1863,68 @@
       return currentLoggedTeacher.kelas;
     }
 
+
+    // ============ SUARA NOTIFIKASI SCAN ============
+    let audioCtx = null;
+    function playBeep(type) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const now = audioCtx.currentTime;
+        const gain = audioCtx.createGain();
+        gain.connect(audioCtx.destination);
+        
+        if (type === 'success') {
+          // Nada tinggi ceria: 2 beep cepat
+          const o1 = audioCtx.createOscillator();
+          o1.connect(gain);
+          o1.frequency.value = 880;
+          o1.type = 'sine';
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          o1.start(now);
+          o1.stop(now + 0.15);
+          
+          const o2 = audioCtx.createOscillator();
+          const g2 = audioCtx.createGain();
+          o2.connect(g2);
+          g2.connect(audioCtx.destination);
+          o2.frequency.value = 1100;
+          o2.type = 'sine';
+          g2.gain.setValueAtTime(0.3, now + 0.12);
+          g2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          o2.start(now + 0.12);
+          o2.stop(now + 0.3);
+        } else if (type === 'duplicate') {
+          // Nada sedang: 2 beep sedang
+          for (let i = 0; i < 2; i++) {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.frequency.value = 600;
+            o.type = 'square';
+            const t = now + i * 0.18;
+            g.gain.setValueAtTime(0.2, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+            o.start(t);
+            o.stop(t + 0.12);
+          }
+        } else {
+          // Nada rendah panjang: error
+          const o = audioCtx.createOscillator();
+          o.connect(gain);
+          o.frequency.value = 220;
+          o.type = 'sawtooth';
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          o.start(now);
+          o.stop(now + 0.4);
+        }
+      } catch(e) { console.warn('Audio tidak didukung:', e); }
+    }
+
     function processAgendaScan(nisnRaw) {
       const nisn = String(nisnRaw).trim();
       const student = students.find(s => String(s.nisn).trim() === nisn);
@@ -1809,6 +1932,7 @@
       
       const targetKelas = getActiveTeacherClass();
       if (targetKelas !== 'Semua' && student.kelas !== targetKelas) {
+        playBeep('error');
         showToast(`Peringatan: Siswa dari kelas ${student.kelas} (Bukan kelas ${targetKelas})`, "error");
         return;
       }
@@ -1857,9 +1981,6 @@
           </div>
           <h4 class="font-bold text-emerald-700 text-base">${safe(nama)} (${safe(status)})</h4>
           <p class="text-xs text-emerald-600 mt-1">Berhasil dicatat • ${safe(detail)}</p>`;
-        setTimeout(() => {
-          if (currentActiveView === 'scan') setGeneralScanResult('waiting');
-        }, 3500);
         return;
       }
 
@@ -1870,9 +1991,6 @@
           </div>
           <h4 class="font-bold text-rose-700 text-base">${safe(nama)} Sudah Absen</h4>
           <p class="text-xs text-rose-600 mt-1">${safe(detail)}</p>`;
-        setTimeout(() => {
-          if (currentActiveView === 'scan') setGeneralScanResult('waiting');
-        }, 3500);
         return;
       }
 
@@ -1883,15 +2001,14 @@
           </div>
           <h4 class="font-bold text-rose-700 text-base">Pemindaian Tidak Valid</h4>
           <p class="text-xs text-rose-600 mt-1">${safe(detail)}</p>`;
-        setTimeout(() => {
-          if (currentActiveView === 'scan') setGeneralScanResult('waiting');
-        }, 3500);
       }
     }
 
     async function recordAttendanceDirect(nisn, nama, kelas, status, jenis, peran = 'Siswa') {
       if (isScanProcessing) return;
       isScanProcessing = true;
+      // Safety: auto-reset setelah 2 detik jika stuck
+      setTimeout(() => { isScanProcessing = false; }, 2000);
 
       try {
         const now = new Date();
@@ -1913,10 +2030,11 @@
         if (isDuplicate) {
           showToast(`⚠️ ${nama} SUDAH absen untuk ${jenis}!`, "error");
           const resEl = document.getElementById('agenda-scan-result');
-          if (resEl) {
+          if (resEl && currentLoggedTeacher) {
             resEl.innerHTML = `<div class="text-rose-600 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i><br>${nama} Sudah Absen (${jenis})!</div>`;
           }
           setGeneralScanResult('duplicate', nama, status, `Jenis sesi: ${jenis}`);
+          playBeep('duplicate');
         } else {
           const materiVal = document.getElementById('agenda-materi')?.value.trim() || '-';
 
@@ -1938,10 +2056,11 @@
           attendanceLogs.unshift(logEntry);
 
           const resEl = document.getElementById('agenda-scan-result');
-          if (resEl) {
+          if (resEl && currentLoggedTeacher) {
             resEl.innerHTML = `<div class="text-emerald-600 font-bold text-sm"><i class="fa-solid fa-circle-check text-xl mb-1"></i><br>${nama} (${status}) Berhasil Dicatat!</div>`;
           }
           setGeneralScanResult('success', nama, status, jenis);
+          playBeep('success');
           showToast(`✅ Absen ${nama} tercatat`);
 
           callGasBackend('saveAbsensi', logEntry);
@@ -1951,7 +2070,7 @@
         console.error("Error catat absensi:", err);
         setGeneralScanResult('error', nama, status, 'Terjadi kesalahan saat mencatat absensi.');
       } finally {
-        setTimeout(() => { isScanProcessing = false; }, 1200);
+        isScanProcessing = false;
       }
     }
 
@@ -1994,8 +2113,10 @@
         }
 
         const config = {
-          fps: 10,
-          qrbox: { width: 220, height: 220 },
+          fps: 15,
+          qrbox: { width: 250, height: 250 },
+          useBarCodeDetectorIfSupported: true,
+          videoConstraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
           aspectRatio: 1.0
         };
 
@@ -2082,6 +2203,7 @@
         return;
       }
 
+      playBeep('error');
       showToast("ID / QR Code tidak terdaftar dalam sistem", "error");
       setGeneralScanResult('error', '', '', 'ID / QR Code tidak terdaftar dalam sistem.');
     }
@@ -2130,7 +2252,7 @@
           badgeTitle: 'KARTU SISWA',
           headerClass: 'card-header-siswa',
           nama: s.nama,
-          infoBadge: `Kelas: ${s.kelas}`,
+          infoBadge: null,
           idLabel: 'ID',
           foto: s.fotoUrl && s.fotoUrl.trim() !== '' ? s.fotoUrl : DEFAULT_AVATAR_SVG,
           jk: s.jk || 'L',

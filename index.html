@@ -2036,7 +2036,8 @@
           setGeneralScanResult('duplicate', nama, status, `Jenis sesi: ${jenis}`);
           playBeep('duplicate');
         } else {
-          const materiVal = document.getElementById('agenda-materi')?.value.trim() || '-';
+          const materiEl = document.getElementById('agenda-materi');
+          const materiVal = materiEl ? materiEl.value.trim() || '-' : '-';
 
           const logEntry = {
             timestamp: `${dateStr} ${now.toLocaleTimeString('id-ID')}`,
@@ -2063,8 +2064,11 @@
           playBeep('success');
           showToast(`✅ Absen ${nama} tercatat`);
 
-          callGasBackend('saveAbsensi', logEntry);
-          refreshCurrentViewData();
+          // Operasi backend dibungkus try-catch terpisah agar error tidak menimpa tampilan success
+          try {
+            callGasBackend('saveAbsensi', logEntry);
+            refreshCurrentViewData();
+          } catch(e) { console.warn('Backend sync error:', e); }
         }
       } catch (err) {
         console.error("Error catat absensi:", err);
@@ -2187,8 +2191,15 @@
       }
     }
 
+    let lastScanId = '';
+    let lastScanTime = 0;
     function processAttendanceScan(idCode) {
       const cleanId = String(idCode).trim();
+      // Debounce: jika scan yang sama datang dalam 2 detik, abaikan agar info terbaca dulu
+      const now = Date.now();
+      if (cleanId === lastScanId && (now - lastScanTime) < 2000) return;
+      lastScanId = cleanId;
+      lastScanTime = now;
       setGeneralScanResult('processing', '', '', `QR Code terbaca: ${cleanId}`);
 
       const student = students.find(s => String(s.nisn).trim() === cleanId);

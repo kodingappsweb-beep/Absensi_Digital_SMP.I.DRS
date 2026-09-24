@@ -498,6 +498,9 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+
+    /* Mode Self-Service: sembunyikan tombol logout & elemen sensitif */
+    body.is-petugas .petugas-hide { display: none !important; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col md:flex-row antialiased selection:bg-indigo-500 selection:text-white">
@@ -560,7 +563,7 @@
       <div><h1 class="font-bold text-base leading-tight" id="mobile-app-title">Absensi QR</h1><p class="text-xs text-slate-400" id="mobile-school-name">Memuat...</p></div>
     </div>
     <div class="flex items-center space-x-2">
-      <button onclick="logoutApp()" class="p-2 text-rose-400 hover:text-white text-xs"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
+      <button onclick="logoutApp()" class="petugas-hide p-2 text-rose-400 hover:text-white text-xs"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
       <button onclick="toggleMobileMenu()" class="p-2 text-slate-300 hover:text-white"><i class="fa-solid fa-bars text-xl"></i></button>
     </div>
   </header>
@@ -579,7 +582,7 @@
         <nav class="space-y-2" id="mobile-nav-container"></nav>
       </div>
       <div class="pt-4 border-t border-slate-800">
-        <button onclick="logoutApp()" class="w-full py-2.5 bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white rounded-xl font-bold text-xs transition flex items-center justify-center space-x-2">
+        <button onclick="logoutApp()" class="petugas-hide w-full py-2.5 bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white rounded-xl font-bold text-xs transition flex items-center justify-center space-x-2">
           <i class="fa-solid fa-right-from-bracket"></i><span>Keluar / Logout</span>
         </button>
       </div>
@@ -604,7 +607,7 @@
         </span>
       </div>
       <p class="text-slate-300 font-semibold truncate" id="sidebar-school-name">Memuat Data...</p>
-      <button onclick="logoutApp()" class="w-full py-2 bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg font-bold text-xs transition flex items-center justify-center space-x-1.5">
+      <button onclick="logoutApp()" class="petugas-hide w-full py-2 bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white rounded-lg font-bold text-xs transition flex items-center justify-center space-x-1.5">
         <i class="fa-solid fa-right-from-bracket"></i><span>Logout</span>
       </button>
     </div>
@@ -988,14 +991,14 @@
               </select>
 
               <!-- Filter Peran (Hanya Muncul untuk Admin) -->
-              <select id="belum-role-filter" onchange="renderBelumAbsenTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="belum-role-filter" onchange="renderBelumAbsenTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
                 <option value="ALL">Semua Peran (Guru & Siswa)</option>
                 <option value="Guru">Guru</option>
                 <option value="Siswa">Siswa</option>
               </select>
 
               <!-- Filter Jenis Sesi Absensi (Hanya Muncul untuk Admin) -->
-              <select id="belum-session-filter" onchange="renderBelumAbsenTable()" class="admin-only-filter px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
+              <select id="belum-session-filter" onchange="renderBelumAbsenTable()" class="px-3 py-2 bg-slate-50 border rounded-xl text-xs font-semibold">
                 <option value="Masuk Sekolah">Masuk Sekolah</option>
                 <option value="Shalat Duha">Shalat Duha</option>
                 <option value="Shalat Dzuhur">Shalat Dzuhur</option>
@@ -1095,13 +1098,13 @@
 
   <script>
     // URL Endpoint Apps Script
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwICq52zH918aHghUjrEfZMtO0v5XLaGA2QnaCevomyAa8gwzncsE92gVDHHUjdOaY/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxXqj7GwQnxhPvZAhXrUXrTsg3P0BzMTuc081qakdcu-OOj88lqwKj7M-4wdcUpv41hoA/exec";
 
     const DEFAULT_LOGO_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><path d='M50 20L15 40v10h70V40L50 20zM25 55v25h10V55H25zm20 0v25h10V55H45zm20 0v25h10V55H65zM15 85v5h70v-5H15z' fill='%23ffffff'/></svg>";
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20247282', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMK Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -1159,6 +1162,12 @@
       { id:'agenda', label:'Agenda Kelas', icon:'fa-book-open' },
       { id:'rekap', label:'Rekap Absensi', icon:'fa-file-lines' },
       { id:'belum', label:'Belum Absen & Aksi', icon:'fa-clock-rotate-left' }
+    ];
+
+    const petugasNavItems = [
+      { id:'scan', label:'Scan QR Absen', icon:'fa-camera' },
+      { id:'belum', label:'Belum Absen', icon:'fa-clock-rotate-left' },
+      { id:'exit', label:'Keluar Mode', icon:'fa-lock' }
     ];
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -1557,6 +1566,23 @@
         return dbUser.toLowerCase() === u.toLowerCase() && dbPass === p;
       });
 
+      // Cek akun petugas (self-service)
+      if (u.toLowerCase() === 'petugas' && p === 'petugas123') {
+        currentUserRole = 'petugas';
+        currentLoggedTeacher = null;
+        document.getElementById('admin-user').value = '';
+        document.getElementById('admin-pass').value = '';
+        saveSessionToStorage();
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.body.classList.add('is-petugas');
+        updateRoleBasedVisibility();
+        renderNavMenu();
+        switchView('scan');
+        requestWakeLock(); // Jaga layar tetap menyala di mode self-service
+        showToast('Mode Self-Service Aktif. Layar tetap menyala.');
+        return;
+      }
+
       if (matchedAdmin) {
         currentUserRole = 'admin';
         currentLoggedTeacher = null;
@@ -1610,9 +1636,14 @@
         adminFilters.forEach(el => el.classList.add('hidden'));
         guruFilters.forEach(el => el.classList.remove('hidden'));
         populateGuruMapelFilter();
+        document.querySelectorAll('.petugas-hide').forEach(el => el.classList.remove('hidden'));
+      } else if (currentUserRole === 'petugas') {
+        adminFilters.forEach(el => el.classList.add('hidden'));
+        guruFilters.forEach(el => el.classList.add('hidden'));
       } else {
         adminFilters.forEach(el => el.classList.remove('hidden'));
         guruFilters.forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.petugas-hide').forEach(el => el.classList.remove('hidden'));
       }
     }
 
@@ -1627,9 +1658,45 @@
       el.innerHTML = mapelList.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
+    function exitSelfService() {
+      const pin = prompt('Masukkan PIN Admin untuk keluar dari Mode Self-Service:');
+      if (pin === null) return;
+      if (pin === 'admin123' || pin === 'Even123') {
+        showToast('Keluar dari Mode Self-Service', 'success');
+        logoutApp();
+      } else {
+        alert('PIN salah! Silakan coba lagi.');
+      }
+    }
+
+    // ============ WAKE LOCK (Jaga Layar Tetap Menyala) ============
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock aktif - layar tetap menyala (mode self-service)');
+          wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock terlepas');
+          });
+        }
+      } catch (err) { console.warn('Wake Lock tidak didukung:', err); }
+    }
+    function releaseWakeLock() {
+      if (wakeLock) { try { wakeLock.release(); } catch(e) {} wakeLock = null; }
+    }
+    // Aktifkan kembali saat tab menjadi visible lagi
+    document.addEventListener('visibilitychange', async () => {
+      if (wakeLock !== null && document.visibilityState === 'visible' && currentUserRole === 'petugas') {
+        await requestWakeLock();
+      }
+    });
+
     function logoutApp() {
       currentUserRole = null;
       currentLoggedTeacher = null;
+      document.body.classList.remove('is-petugas');
+      releaseWakeLock(); // Lepas wake lock saat logout
       if (isCameraActive) stopCamera();
       if (isAgendaCamActive) stopCameraAgenda();
       
@@ -1640,9 +1707,12 @@
     }
 
     function renderNavMenu() {
-      const items = currentUserRole === 'admin' ? adminNavItems : guruNavItems;
+      let items;
+      if (currentUserRole === 'admin') items = adminNavItems;
+      else if (currentUserRole === 'petugas') items = petugasNavItems;
+      else items = guruNavItems;
       const html = items.map(item => `
-        <button onclick="switchView('${item.id}')" data-view="${item.id}" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl font-semibold text-xs transition-all text-slate-400 hover:bg-slate-800 hover:text-white">
+        <button onclick="${item.id === 'exit' ? 'exitSelfService()' : `switchView('${item.id}')`}" data-view="${item.id}" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl font-semibold text-xs transition-all text-slate-400 hover:bg-slate-800 hover:text-white">
           <i class="fa-solid ${item.icon} text-base w-5"></i><span>${item.label}</span>
         </button>`).join('');
       document.getElementById('desktop-nav-container').innerHTML = html;

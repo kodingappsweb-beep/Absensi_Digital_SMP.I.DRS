@@ -728,6 +728,9 @@
               <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="fa-solid fa-camera text-indigo-600"></i><span>Scan QR Kehadiran Siswa untuk Kelas Ini</span></h4>
               <div class="flex items-center space-x-2 w-full sm:w-auto">
                 <select id="agenda-camera-select" onchange="switchCameraDeviceAgenda()" class="hidden px-2 py-1.5 bg-white border rounded-lg text-xs font-semibold"></select>
+                <button id="btn-switch-camera-agenda" onclick="toggleCameraAgendaFacing()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200" title="Ganti kamera depan/belakang">
+                  <i class="fa-solid fa-camera-rotate mr-1"></i><span id="agenda-facing-btn-text">Kamera Depan</span>
+                </button>
                 <button id="btn-toggle-camera-agenda" onclick="toggleCameraAgenda()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md"><i class="fa-solid fa-power-off mr-1"></i><span id="agenda-camera-btn-text">Nyalakan Kamera</span></button>
               </div>
             </div>
@@ -877,6 +880,11 @@
             <div><h3 class="font-bold text-slate-800 text-lg">Kelola Data Siswa</h3><p class="text-xs text-slate-500">Data tersimpan di Google Sheets (Sheet: Siswa)</p></div>
             <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
               <button onclick="downloadExcelTemplate('siswa')" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs rounded-xl border border-emerald-200"><i class="fa-solid fa-download mr-1"></i> Template Excel</button>
+              <button onclick="exportFaceData()" class="px-3 py-2 bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold text-xs rounded-xl border border-sky-200"><i class="fa-solid fa-face-smile mr-1"></i> Export Wajah</button>
+              <label class="px-3 py-2 bg-teal-50 text-teal-700 hover:bg-teal-100 font-bold text-xs rounded-xl border border-teal-200 cursor-pointer">
+                <i class="fa-solid fa-file-import mr-1"></i> Import Wajah
+                <input type="file" accept=".json" onchange="importFaceData(event)" class="hidden">
+              </label>
               <label class="px-3 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-xs rounded-xl border border-amber-200 cursor-pointer">
                 <i class="fa-solid fa-file-excel mr-1"></i> Import Excel
                 <input type="file" accept=".xlsx, .xls, .csv" onchange="importExcelData(event, 'siswa')" class="hidden">
@@ -1153,7 +1161,7 @@
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMK Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -1328,6 +1336,14 @@
       if (data.kelas) classList = data.kelas.map(k => k.nama).filter(Boolean);
       if (data.pengaturan && data.pengaturan.length > 0) schoolProfile = { ...schoolProfile, ...data.pengaturan[0] };
       if (data.users) adminUsers = data.users;
+      // Hidrasi data wajah dari backend (agar daftar wajah di laptop terbaca di HP dan sebaliknya)
+      if (data.faceData && Array.isArray(data.faceData)) {
+        try {
+          data.faceData.forEach(function(f){
+            if (f && f.id && f.descriptor) localStorage.setItem('face_desc_' + String(f.id), f.descriptor);
+          });
+        } catch(e){}
+      }
 
       applySchoolProfileUI();
       applySchoolProfileToLogin(); // Terapkan juga ke layar login
@@ -1905,7 +1921,9 @@
         facingText.innerText = generalCameraFacing === 'user' ? 'Kamera Belakang' : 'Kamera Depan';
       }
 
-      if (isCameraActive) {
+      if (typeof currentScanMethod !== 'undefined' && currentScanMethod === 'face') {
+        if (isFaceActive) { stopFaceScan(); startFaceScan(); }
+      } else if (isCameraActive) {
         await stopCamera();
         await startCamera();
       } else {
@@ -1942,16 +1960,16 @@
           console.warn("Camera list fetch warning:", err);
         }
 
-        const config = { fps: 20, qrbox: { width: 250, height: 250 }, useBarCodeDetectorIfSupported: true, aspectRatio: 1.333 };
+        const config = { fps: isMobileDevice() ? 10 : 20, qrbox: { width: 250, height: 250 }, useBarCodeDetectorIfSupported: true, aspectRatio: 1.333 };
 
         try {
           if (selectedAgendaCameraId) {
             await html5QrAgenda.start(selectedAgendaCameraId, config, (txt) => processAgendaScan(txt), () => {});
           } else {
-            await html5QrAgenda.start({ facingMode: "environment" }, config, (txt) => processAgendaScan(txt), () => {});
+            await html5QrAgenda.start({ facingMode: (typeof agendaCameraFacing !== 'undefined' ? agendaCameraFacing : 'environment') }, config, (txt) => processAgendaScan(txt), () => {});
           }
         } catch (err1) {
-          await html5QrAgenda.start({ facingMode: "environment" }, config, (txt) => processAgendaScan(txt), () => {});
+          await html5QrAgenda.start({ facingMode: (typeof agendaCameraFacing !== 'undefined' ? agendaCameraFacing : 'environment') }, config, (txt) => processAgendaScan(txt), () => {});
         }
 
         isAgendaCamActive = true;
@@ -2235,12 +2253,13 @@
           selectedCameraId = null;
         }
 
+        const _mobileQR = isMobileDevice();
         const config = {
-          fps: 15,
+          fps: _mobileQR ? 10 : 15,
           qrbox: { width: 250, height: 250 },
           useBarCodeDetectorIfSupported: true,
-          videoConstraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-          aspectRatio: 1.0
+          videoConstraints: { facingMode: 'environment', width: { ideal: _mobileQR ? 640 : 1280 }, height: { ideal: _mobileQR ? 480 : 720 } },
+          aspectRatio: 1.333
         };
 
         try {
@@ -3180,8 +3199,21 @@
     let faceDetectTimer = null;
     let lastFaceScanId = '';
     let lastFaceScanTime = 0;
+    let lastUnknownNotify = 0; // debounce notif wajah belum terdaftar
+    let enrollTipe = 'Siswa';
     let enrollStream = null;
     let enrollNisn = null;
+    // --- Optimasi responsif mobile (HP) ---
+    let faceDetectRunning = false, agendaFaceDetectRunning = false;
+    let agendaCameraFacing = 'environment'; // QR agenda pakai belakang; face dipaksa depan
+    function isMobileDevice() {
+      try {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent)
+          || (('ontouchstart' in window) && window.innerWidth < 900);
+      } catch(e){ return false; }
+    }
+    function faceInputSize() { return isMobileDevice() ? 160 : 224; } // 160 = jauh lebih cepat di HP
+    function faceDetectInterval() { return isMobileDevice() ? 500 : 700; }
 
     function isFaceApiReady() { return typeof faceapi !== 'undefined' && !!faceapi.nets; }
 
@@ -3211,6 +3243,12 @@
       if (currentScanMethod === 'qr' && typeof isCameraActive !== 'undefined' && isCameraActive) { try { stopCamera(); } catch(e){} }
       if (currentScanMethod === 'face' && isFaceActive) { stopFaceScan(); }
       currentScanMethod = method;
+      // Face recognition lebih natural & cepat pakai kamera depan
+      if (method === 'face') {
+        generalCameraFacing = 'user';
+        const _ft = document.getElementById('camera-facing-btn-text');
+        if (_ft) _ft.innerText = 'Kamera Belakang';
+      }
       const activeCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-emerald-600 bg-emerald-600 text-white shadow-xs";
       const inactiveCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-slate-200 bg-white text-slate-700";
       const qrBtn = document.getElementById('method-qr');
@@ -3251,16 +3289,21 @@
       const video = document.getElementById('face-video');
       if (!video) return;
       try {
-        faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: generalCameraFacing, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
         video.srcObject = faceStream;
         await video.play();
+        // Cermin (mirror) jika kamera depan agar pengguna mudah mengarahkan wajah
+        const _mir = generalCameraFacing === 'user';
+        video.style.transform = _mir ? 'scaleX(-1)' : '';
+        const _ov = document.getElementById('face-overlay');
+        if (_ov) _ov.style.transform = _mir ? 'scaleX(-1)' : '';
         isFaceActive = true;
         const btn = document.getElementById('camera-btn-text');
         if (btn) btn.innerText = "Matikan Kamera";
         setGeneralScanResult('waiting');
         showToast("Kamera wajah aktif. Arahkan wajah siswa ke kamera.", "success");
         if (faceDetectTimer) clearInterval(faceDetectTimer);
-        faceDetectTimer = setInterval(faceDetectTick, 800);
+        faceDetectTimer = setInterval(faceDetectTick, faceDetectInterval());
       } catch(err) {
         console.error("Kamera wajah error:", err);
         showToast("Tidak dapat mengakses kamera untuk scan wajah.", "error");
@@ -3287,8 +3330,10 @@
       if (!isFaceActive || currentScanMethod !== 'face' || !isFaceApiReady()) return;
       const video = document.getElementById('face-video');
       if (!video || video.readyState < 2 || !video.videoWidth) return;
+      if (faceDetectRunning) return; // anti tumpang-tindih deteksi (penting di HP)
+      faceDetectRunning = true;
       try {
-        const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+        const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: faceInputSize(), scoreThreshold: 0.5 }))
           .withFaceLandmarks().withFaceDescriptor();
         const canvas = document.getElementById('face-overlay');
         if (canvas) {
@@ -3307,6 +3352,12 @@
         const match = matchFaceDescriptor(det.descriptor);
         if (!match) {
           setGeneralScanResult('unknown', '', '', "Wajah tidak dikenali / belum terdaftar di Data Siswa");
+          const _nowU = Date.now();
+          if (_nowU - lastUnknownNotify > 6000) {
+            lastUnknownNotify = _nowU;
+            showToast("Wajah terdeteksi tapi BELUM terdaftar. Daftarkan di menu Data Siswa/Guru.", "error");
+            if (typeof playBeep === 'function') playBeep('error');
+          }
           return;
         }
         // Debounce: wajah yang sama tidak diproses ulang dalam 3 detik
@@ -3319,6 +3370,8 @@
         recordAttendanceDirect(match.id, match.nama, match.kelas, currentScanMode, currentJenisAbsen, match.peran, 'Wajah');
       } catch(e) {
         console.warn("Face detect tick error:", e);
+      } finally {
+        faceDetectRunning = false;
       }
     }
 
@@ -3346,6 +3399,7 @@
     /* ---------- Pendaftaran wajah siswa (enroll) ---------- */
     function openFaceEnroll(id, tipe = 'Siswa') {
       enrollNisn = String(id);
+      enrollTipe = tipe;
       const modal = document.getElementById('modal-face-enroll');
       if (modal) modal.classList.remove('hidden');
       const info = document.getElementById('face-enroll-info');
@@ -3425,6 +3479,8 @@
         }
         // ==== AKHIR GUARD ====
         localStorage.setItem('face_desc_' + enrollNisn, JSON.stringify(Array.from(det.descriptor)));
+        // Simpan juga ke backend (GAS) agar terbaca di perangkat lain (HP/laptop). Silent jika belum didukung.
+        try { saveFaceDataBackend(enrollNisn, enrollTipe, Array.from(det.descriptor)); } catch(e){}
         // Tandai di objek siswa (TIDAK dikirim ke backend — aman untuk schema GAS)
         const idx = students.findIndex(s => String(s.nisn) === enrollNisn);
         if (idx !== -1) students[idx].faceRegistered = true;
@@ -3462,6 +3518,9 @@
       if (currentAgendaMethod === 'qr' && typeof isAgendaCamActive !== 'undefined' && isAgendaCamActive) { try { stopCameraAgenda(); } catch(e){} }
       if (currentAgendaMethod === 'face' && isAgendaFaceActive) { stopAgendaFaceScan(); }
       currentAgendaMethod = method;
+      agendaCameraFacing = (method === 'face') ? 'user' : 'environment';
+      const _aft = document.getElementById('agenda-facing-btn-text');
+      if (_aft) _aft.innerText = agendaCameraFacing === 'user' ? 'Kamera Belakang' : 'Kamera Depan';
       const activeCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-emerald-600 bg-emerald-600 text-white shadow-xs";
       const inactiveCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-slate-200 bg-white text-slate-700";
       const qrBtn = document.getElementById('method-agenda-qr');
@@ -3492,15 +3551,19 @@
       const video = document.getElementById('face-video-agenda');
       if (!video) return;
       try {
-        agendaFaceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        agendaFaceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: agendaCameraFacing, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
         video.srcObject = agendaFaceStream;
         await video.play();
+        const _mirA = agendaCameraFacing === 'user';
+        video.style.transform = _mirA ? 'scaleX(-1)' : '';
+        const _ovA = document.getElementById('face-overlay-agenda');
+        if (_ovA) _ovA.style.transform = _mirA ? 'scaleX(-1)' : '';
         isAgendaFaceActive = true;
         const btn = document.getElementById('agenda-camera-btn-text');
         if (btn) btn.innerText = "Matikan Kamera";
         showToast("Kamera wajah agenda aktif. Arahkan wajah siswa.", "success");
         if (agendaFaceTimer) clearInterval(agendaFaceTimer);
-        agendaFaceTimer = setInterval(agendaFaceDetectTick, 800);
+        agendaFaceTimer = setInterval(agendaFaceDetectTick, faceDetectInterval());
       } catch(err) {
         console.error("Agenda face camera error:", err);
         showToast("Tidak dapat mengakses kamera wajah.", "error");
@@ -3526,9 +3589,11 @@
       if (!isAgendaFaceActive || currentAgendaMethod !== 'face' || !isFaceApiReady()) return;
       const video = document.getElementById('face-video-agenda');
       if (!video || video.readyState < 2 || !video.videoWidth) return;
+      if (agendaFaceDetectRunning) return;
+      agendaFaceDetectRunning = true;
       const resEl = document.getElementById('agenda-scan-result');
       try {
-        const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+        const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: faceInputSize(), scoreThreshold: 0.5 }))
           .withFaceLandmarks().withFaceDescriptor();
         const canvas = document.getElementById('face-overlay-agenda');
         if (canvas) {
@@ -3547,6 +3612,12 @@
         const match = matchFaceDescriptor(det.descriptor);
         if (!match) {
           if (resEl) resEl.innerHTML = '<div class="text-amber-600 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i><br>Wajah tidak dikenali / belum terdaftar</div>';
+          const _nowU = Date.now();
+          if (_nowU - lastUnknownNotify > 6000) {
+            lastUnknownNotify = _nowU;
+            showToast("Wajah terdeteksi tapi BELUM terdaftar. Daftarkan di menu Data Siswa/Guru.", "error");
+            if (typeof playBeep === 'function') playBeep('error');
+          }
           return;
         }
         if (match.peran !== 'Siswa') {
@@ -3571,7 +3642,72 @@
         recordAttendanceDirect(match.id, match.nama, match.kelas, 'Hadir', mapelName, 'Siswa', 'Wajah');
       } catch(e) {
         console.warn("Agenda face detect error:", e);
+      } finally {
+        agendaFaceDetectRunning = false;
       }
+    }
+
+    function toggleCameraAgendaFacing() {
+      agendaCameraFacing = agendaCameraFacing === 'environment' ? 'user' : 'environment';
+      selectedAgendaCameraId = null;
+      const ft = document.getElementById('agenda-facing-btn-text');
+      if (ft) ft.innerText = agendaCameraFacing === 'user' ? 'Kamera Belakang' : 'Kamera Depan';
+      if (typeof currentAgendaMethod !== 'undefined' && currentAgendaMethod === 'face') {
+        if (isAgendaFaceActive) { stopAgendaFaceScan(); startAgendaFaceScan(); }
+      } else if (isAgendaCamActive) {
+        stopCameraAgenda(); startCameraAgenda();
+      }
+    }
+
+    /* ---------- Sinkronisasi & Export/Import Data Wajah (lintas perangkat) ---------- */
+    function saveFaceDataBackend(id, tipe, descriptorArray) {
+      if (!GAS_URL) return;
+      const payload = JSON.stringify({ action: 'saveFaceData', param: { id: String(id), tipe: tipe, descriptor: JSON.stringify(descriptorArray) } });
+      // Silent: jika backend GAS belum punya handler 'saveFaceData', tidak mengganggu aplikasi
+      fetch(GAS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: payload })
+        .then(function(r){ return r.json(); }).then(function(){})
+        .catch(function(){});
+    }
+
+    function exportFaceData() {
+      const data = {};
+      let count = 0;
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.indexOf('face_desc_') === 0) { data[k] = localStorage.getItem(k); count++; }
+        }
+      } catch(e){}
+      if (count === 0) { showToast("Belum ada data wajah yang terdaftar.", "error"); return; }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'data-wajah-' + getTodayLocalDateStr() + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(count + " data wajah berhasil diexport. Pindahkan file ini ke perangkat lain lalu Import Wajah.", "success");
+    }
+
+    function importFaceData(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          const data = JSON.parse(ev.target.result);
+          let count = 0;
+          Object.keys(data).forEach(function(k){
+            if (k.indexOf('face_desc_') === 0 && data[k]) { localStorage.setItem(k, data[k]); count++; }
+          });
+          showToast("Berhasil mengimport " + count + " data wajah. Sekarang wajah yang terdaftar di perangkat lain bisa discan di sini.", "success");
+          if (typeof renderSiswaTable === 'function') renderSiswaTable();
+          if (typeof renderGuruTable === 'function') renderGuruTable();
+        } catch(err) {
+          showToast("File tidak valid. Pastikan file hasil Export Wajah.", "error");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
     }
 
     /* ============================================================

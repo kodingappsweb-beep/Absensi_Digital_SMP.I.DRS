@@ -10,6 +10,8 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Face Recognition (scan wajah) - tambahan, fail-safe: jika gagal dimuat, mode QR tetap berjalan -->
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
@@ -730,9 +732,22 @@
               </div>
             </div>
 
+            <!-- Pilihan Metode Scan Agenda (QR / Wajah) - TAMBAHAN -->
+            <div class="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100">
+              <label class="block text-xs font-bold text-emerald-900 uppercase mb-2">Metode Pemindaian Kehadiran:</label>
+              <div class="grid grid-cols-2 gap-2 max-w-md">
+                <button type="button" onclick="setAgendaScanMethod('qr')" id="method-agenda-qr" class="py-2 px-2 rounded-xl border text-xs font-bold text-center border-emerald-600 bg-emerald-600 text-white shadow-xs"><i class="fa-solid fa-qrcode mr-1"></i>QR Code</button>
+                <button type="button" onclick="setAgendaScanMethod('face')" id="method-agenda-face" class="py-2 px-2 rounded-xl border text-xs font-bold text-center border-slate-200 bg-white text-slate-700"><i class="fa-solid fa-face-smile mr-1"></i>Wajah (Face Recog)</button>
+              </div>
+              <p class="text-[10px] text-emerald-700 mt-2"><i class="fa-solid fa-circle-info"></i> Mode Wajah: pastikan wajah siswa sudah terdaftar di Data Siswa.</p>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <div class="lg:col-span-7 bg-slate-900 rounded-2xl overflow-hidden min-h-[260px] flex items-center justify-center relative border-2 border-indigo-500/20">
                 <div id="qr-reader-agenda" class="w-full h-full"></div>
+                <!-- Kamera & overlay mode wajah di Agenda - TAMBAHAN (default tersembunyi) -->
+                <video id="face-video-agenda" class="hidden w-full h-full object-cover" autoplay muted playsinline></video>
+                <canvas id="face-overlay-agenda" class="hidden absolute inset-0 w-full h-full pointer-events-none"></canvas>
                 <div id="qr-placeholder-agenda" class="text-center p-6 text-slate-400">
                   <div class="w-14 h-14 rounded-2xl bg-slate-800 text-indigo-400 flex items-center justify-center mx-auto mb-2 text-xl border border-slate-700"><i class="fa-solid fa-qrcode"></i></div>
                   <p class="font-medium text-xs text-slate-300">Kamera Scanner Non-aktif</p>
@@ -770,6 +785,16 @@
                 </div>
               </div>
 
+              <!-- Pilihan Metode Scan (QR / Wajah) - TAMBAHAN -->
+              <div class="mb-4 bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100">
+                <label class="block text-xs font-bold text-emerald-900 uppercase mb-2">Metode Pemindaian:</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" onclick="setScanMethod('qr')" id="method-qr" class="py-2 px-2 rounded-xl border text-xs font-bold text-center border-emerald-600 bg-emerald-600 text-white shadow-xs"><i class="fa-solid fa-qrcode mr-1"></i>QR Code</button>
+                  <button type="button" onclick="setScanMethod('face')" id="method-face" class="py-2 px-2 rounded-xl border text-xs font-bold text-center border-slate-200 bg-white text-slate-700"><i class="fa-solid fa-face-smile mr-1"></i>Wajah (Face Recog)</button>
+                </div>
+                <p class="text-[10px] text-emerald-700 mt-2"><i class="fa-solid fa-circle-info"></i> Mode Wajah memerlukan pendaftaran wajah siswa di menu <b>Data Siswa</b> (tombol <i class="fa-solid fa-face-smile"></i>) & koneksi internet saat pertama kali dipakai.</p>
+              </div>
+
               <!-- Pilihan Jenis Sesi Absensi -->
               <div class="mb-4 bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100">
                 <label class="block text-xs font-bold text-indigo-900 uppercase mb-2">Pilih Jenis Sesi Absen:</label>
@@ -783,6 +808,9 @@
 
               <div class="relative bg-slate-900 rounded-2xl overflow-hidden min-h-[280px] sm:min-h-[340px] flex items-center justify-center border-2 border-indigo-500/20">
                 <div id="qr-reader" class="w-full h-full"></div>
+                <!-- Kamera & overlay untuk mode wajah - TAMBAHAN (default tersembunyi) -->
+                <video id="face-video" class="hidden w-full h-full object-cover" autoplay muted playsinline></video>
+                <canvas id="face-overlay" class="hidden absolute inset-0 w-full h-full pointer-events-none"></canvas>
                 <div id="qr-placeholder" class="text-center p-8 text-slate-400">
                   <div class="w-16 h-16 rounded-2xl bg-slate-800 text-indigo-400 flex items-center justify-center mx-auto mb-3 text-2xl border border-slate-700"><i class="fa-solid fa-qrcode"></i></div>
                   <p class="font-medium text-sm text-slate-300">Kamera Non-aktif</p><p class="text-xs text-slate-500 mt-1">Klik tombol "Nyalakan Kamera" di atas</p>
@@ -965,6 +993,7 @@
                   <th class="px-6 py-3.5">Kelas</th>
                   <th class="px-6 py-3.5">Jenis / Sesi</th>
                   <th class="px-6 py-3.5">Status</th>
+                  <th class="px-6 py-3.5">Metode</th>
                 </tr>
               </thead>
               <tbody id="rekap-table-body" class="divide-y divide-slate-100"></tbody>
@@ -1096,6 +1125,26 @@
     </div>
   </div>
 
+  <!-- MODAL DAFTAR WAJAH SISWA - TAMBAHAN -->
+  <div id="modal-face-enroll" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b">
+        <h3 class="font-bold text-slate-800 text-lg"><i class="fa-solid fa-face-smile text-emerald-600 mr-1"></i>Daftarkan Wajah Siswa</h3>
+        <button onclick="closeFaceEnroll()"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <p id="face-enroll-info" class="text-xs text-slate-500">Arahkan wajah ke kamera, pastikan terang & tidak tertutup, lalu klik Tangkap Wajah.</p>
+      <div class="relative bg-slate-900 rounded-2xl overflow-hidden h-64 flex items-center justify-center">
+        <video id="face-enroll-video" class="w-full h-full object-cover" autoplay muted playsinline></video>
+        <canvas id="face-enroll-overlay" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+        <div id="face-enroll-loading" class="absolute inset-0 bg-slate-900/70 text-white text-xs font-bold flex items-center justify-center text-center px-4">Memuat model face recognition & kamera...<br>(pertama kali butuh koneksi internet)</div>
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button type="button" onclick="closeFaceEnroll()" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold">Batal</button>
+        <button type="button" onclick="captureFaceEnroll()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-camera mr-1"></i>Tangkap Wajah</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // URL Endpoint Apps Script
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwICq52zH918aHghUjrEfZMtO0v5XLaGA2QnaCevomyAa8gwzncsE92gVDHHUjdOaY/exec";
@@ -1104,7 +1153,7 @@
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20147282', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMK Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -1864,7 +1913,7 @@
       }
     }
 
-    async function toggleCameraAgenda() {
+    async function toggleCameraAgenda() { if (typeof currentAgendaMethod !== 'undefined' && currentAgendaMethod === 'face') { if (isAgendaFaceActive) stopAgendaFaceScan(); else startAgendaFaceScan(); return; }
       if (isAgendaCamActive) { 
         await stopCameraAgenda(); 
       } else { 
@@ -1995,7 +2044,7 @@
       } catch(e) { console.warn('Audio tidak didukung:', e); }
     }
 
-    function processAgendaScan(nisnRaw) {
+    function processAgendaScan(nisnRaw, method = 'QR Code') {
       const nisn = String(nisnRaw).trim();
       const student = students.find(s => String(s.nisn).trim() === nisn);
       if (!student) { showToast("Siswa tidak ditemukan", "error"); return; }
@@ -2008,12 +2057,12 @@
       }
       
       const mapelName = document.getElementById('agenda-mapel').value || currentLoggedTeacher?.jabatan || 'Pelajaran';
-      recordAttendanceDirect(nisn, student.nama, student.kelas, 'Hadir', mapelName, 'Siswa');
+      recordAttendanceDirect(nisn, student.nama, student.kelas, 'Hadir', mapelName, 'Siswa', method);
     }
 
     function handleAgendaManualScan() {
       const val = document.getElementById('agenda-manual-nisn').value.trim();
-      if (val) { processAgendaScan(val); document.getElementById('agenda-manual-nisn').value = ''; }
+      if (val) { processAgendaScan(val, 'Manual'); document.getElementById('agenda-manual-nisn').value = ''; }
     }
 
     function setGeneralScanResult(type, nama = '', status = '', detail = '') {
@@ -2074,7 +2123,7 @@
       }
     }
 
-    async function recordAttendanceDirect(nisn, nama, kelas, status, jenis, peran = 'Siswa') {
+    async function recordAttendanceDirect(nisn, nama, kelas, status, jenis, peran = 'Siswa', method = 'QR Code') {
       if (isScanProcessing) return;
       isScanProcessing = true;
       // Safety: auto-reset setelah 2 detik jika stuck
@@ -2119,7 +2168,7 @@
             jenisAbsen: jenis, 
             status, 
             peran: peran, 
-            method: 'Scan System',
+            method: method,
             materi: materiVal,
             guruNip: currentLoggedTeacher ? currentLoggedTeacher.nip : ''
           };
@@ -2148,7 +2197,7 @@
       }
     }
 
-    async function toggleCamera() { 
+    async function toggleCamera() { if (typeof currentScanMethod !== 'undefined' && currentScanMethod === 'face') { if (isFaceActive) stopFaceScan(); else startFaceScan(); return; } 
       if (isCameraActive) await stopCamera(); else await startCamera(); 
     }
 
@@ -2263,7 +2312,7 @@
 
     let lastScanId = '';
     let lastScanTime = 0;
-    function processAttendanceScan(idCode) {
+    function processAttendanceScan(idCode, method = 'QR Code') {
       const cleanId = String(idCode).trim();
       // Debounce: jika scan yang sama datang dalam 2 detik, abaikan agar info terbaca dulu
       const now = Date.now();
@@ -2274,13 +2323,13 @@
 
       const student = students.find(s => String(s.nisn).trim() === cleanId);
       if (student) {
-        recordAttendanceDirect(student.nisn, student.nama, student.kelas, currentScanMode, currentJenisAbsen, 'Siswa');
+        recordAttendanceDirect(student.nisn, student.nama, student.kelas, currentScanMode, currentJenisAbsen, 'Siswa', method);
         return;
       }
 
       const teacher = teachers.find(t => String(t.nip).trim() === cleanId);
       if (teacher) {
-        recordAttendanceDirect(teacher.nip, teacher.nama, 'Guru/Staf', currentScanMode, currentJenisAbsen, 'Guru');
+        recordAttendanceDirect(teacher.nip, teacher.nama, 'Guru/Staf', currentScanMode, currentJenisAbsen, 'Guru', method);
         return;
       }
 
@@ -2292,7 +2341,7 @@
     function handleManualInput(e) {
       e.preventDefault();
       const val = document.getElementById('manual-nisn-input').value.trim();
-      if (val) { processAttendanceScan(val); document.getElementById('manual-nisn-input').value = ''; }
+      if (val) { processAttendanceScan(val, 'Manual'); document.getElementById('manual-nisn-input').value = ''; }
     }
 
     function setJenisAbsen(jenis) {
@@ -2582,7 +2631,7 @@
       const filtered = getFilteredRekapData();
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 font-semibold">Tidak ada data rekap absensi untuk kriteria yang dipilih.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400 font-semibold">Tidak ada data rekap absensi untuk kriteria yang dipilih.</td></tr>`;
         return;
       }
 
@@ -2609,6 +2658,7 @@
             <td class="px-6 py-3.5">${l.kelas}</td>
             <td class="px-6 py-3.5"><span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold">${l.jenisAbsen || 'Masuk'}</span></td>
             <td class="px-6 py-3.5"><span class="px-2.5 py-1 ${l.status === 'Hadir' ? 'bg-emerald-100 text-emerald-800' : l.status === 'Alfa' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'} rounded text-xs font-bold">${l.status}</span></td>
+            <td class="px-6 py-3.5"><span class="px-2 py-1 ${l.method === 'Wajah' ? 'bg-emerald-100 text-emerald-800' : l.method === 'Manual' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800'} rounded text-xs font-bold"><i class="fa-solid ${l.method === 'Wajah' ? 'fa-face-smile' : l.method === 'Manual' ? 'fa-keyboard' : 'fa-qrcode'} mr-1"></i>${l.method || 'QR Code'}</span></td>
           </tr>
         `;
       }).join('');
@@ -2657,6 +2707,7 @@
         'Kelas': l.kelas,
         'Jenis / Sesi': l.jenisAbsen || 'Masuk Sekolah',
         'Status': l.status,
+        'Metode Absen': l.method || 'QR Code',
         'Judul Materi Pembelajaran': l.materi || '-'
       }));
 
@@ -2747,7 +2798,7 @@
       } else {
         jenis = document.getElementById('belum-session-filter')?.value || "Masuk Sekolah";
       }
-      recordAttendanceDirect(nisn, nama, kelas, status, jenis, peran);
+      recordAttendanceDirect(nisn, nama, kelas, status, jenis, peran, 'Manual');
     }
 
     /* ============ CRUD DATA SISWA ============ */
@@ -2778,6 +2829,8 @@
           <td class="px-6 py-3">${s.jk || 'L'}</td>
           <td class="px-6 py-3">${s.nohp || '-'}</td>
           <td class="px-6 py-3 text-right space-x-2">
+            <button onclick="openFaceEnroll('${s.nisn}')" class="${hasFaceData(s.nisn)?'text-emerald-600':'text-slate-400'} hover:text-emerald-800 text-xs font-bold" title="Daftarkan wajah siswa untuk absen via pengenalan wajah"><i class="fa-solid fa-face-smile"></i> ${hasFaceData(s.nisn)?'Terdaftar':'Daftar Wajah'}</button>
+            <button onclick="clearFaceData('${s.nisn}')" class="${hasFaceData(s.nisn)?'text-rose-400 hover:text-rose-600':'hidden'} text-xs font-bold ml-1" title="Hapus data wajah siswa ini"><i class="fa-solid fa-trash-can"></i></button>
             <button onclick="editSiswa('${s.nisn}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen"></i> Edit</button>
             <button onclick="deleteSiswa('${s.nisn}')" class="text-rose-600 hover:text-rose-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Hapus</button>
           </td>
@@ -2891,6 +2944,8 @@
           </td>
           <td class="px-6 py-3">${g.nohp || '-'}</td>
           <td class="px-6 py-3 text-right space-x-2">
+            <button onclick="openFaceEnroll('${g.nip}', 'Guru')" class="${hasFaceData(g.nip)?'text-emerald-600':'text-slate-400'} hover:text-emerald-800 text-xs font-bold" title="Daftarkan wajah guru untuk absen via pengenalan wajah"><i class="fa-solid fa-face-smile"></i> ${hasFaceData(g.nip)?'Terdaftar':'Daftar Wajah'}</button>
+            <button onclick="clearFaceData('${g.nip}')" class="${hasFaceData(g.nip)?'text-rose-400 hover:text-rose-600':'hidden'} text-xs font-bold ml-1" title="Hapus data wajah guru ini"><i class="fa-solid fa-trash-can"></i></button>
             <button onclick="editGuru('${g.nip}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen"></i> Edit</button>
             <button onclick="deleteGuru('${g.nip}')" class="text-rose-600 hover:text-rose-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Hapus</button>
           </td>
@@ -3106,6 +3161,423 @@
       };
       reader.readAsArrayBuffer(file);
     }
+    /* ============================================================
+       FITUR SCAN WAJAH (Face Recognition) - TAMBAHAN
+       Non-destructive: semua kode QR & fitur lama tetap utuh.
+       - Data wajah (descriptor 128-d) disimpan di localStorage,
+         TIDAK dikirim ke backend GAS (schema backend tidak berubah).
+       - Jika library/model gagal dimuat, otomatis fallback ke QR.
+       - Pencatatan absen MEMAKAI ULANG fungsi recordAttendanceDirect()
+         yang sudah ada (sama persis seperti hasil scan QR).
+       ============================================================ */
+    const FACE_MODELS_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
+    const FACE_MATCH_THRESHOLD = 0.55; // jarak euclidean < 0.55 = dikenali
+    let currentScanMethod = 'qr';      // 'qr' | 'face'
+    let faceModelsLoaded = false;
+    let faceModelsLoading = null;      // promise singleton (anti dobel load)
+    let isFaceActive = false;
+    let faceStream = null;
+    let faceDetectTimer = null;
+    let lastFaceScanId = '';
+    let lastFaceScanTime = 0;
+    let enrollStream = null;
+    let enrollNisn = null;
+
+    function isFaceApiReady() { return typeof faceapi !== 'undefined' && !!faceapi.nets; }
+
+    function hasFaceData(nisn) {
+      try { return !!localStorage.getItem('face_desc_' + String(nisn)); } catch(e){ return false; }
+    }
+
+    function loadFaceModels() {
+      if (faceModelsLoaded) return Promise.resolve(true);
+      if (faceModelsLoading) return faceModelsLoading;
+      if (!isFaceApiReady()) {
+        showToast("Library face recognition belum termuat. Periksa koneksi internet.", "error");
+        return Promise.reject(new Error('no-faceapi'));
+      }
+      faceModelsLoading = Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODELS_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODELS_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODELS_URL)
+      ]).then(() => { faceModelsLoaded = true; return true; })
+        .catch(err => { console.error("Model face gagal dimuat:", err); faceModelsLoading = null; throw err; });
+      return faceModelsLoading;
+    }
+
+    function setScanMethod(method) {
+      if (method === currentScanMethod) return;
+      // Hentikan kamera yang sedang aktif (masing-masing jalur terpisah)
+      if (currentScanMethod === 'qr' && typeof isCameraActive !== 'undefined' && isCameraActive) { try { stopCamera(); } catch(e){} }
+      if (currentScanMethod === 'face' && isFaceActive) { stopFaceScan(); }
+      currentScanMethod = method;
+      const activeCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-emerald-600 bg-emerald-600 text-white shadow-xs";
+      const inactiveCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-slate-200 bg-white text-slate-700";
+      const qrBtn = document.getElementById('method-qr');
+      const faceBtn = document.getElementById('method-face');
+      if (qrBtn) qrBtn.className = (method === 'qr') ? activeCls : inactiveCls;
+      if (faceBtn) faceBtn.className = (method === 'face') ? activeCls : inactiveCls;
+      const qrReader = document.getElementById('qr-reader');
+      const faceVideo = document.getElementById('face-video');
+      const faceOverlay = document.getElementById('face-overlay');
+      const placeholder = document.getElementById('qr-placeholder');
+      if (method === 'face') {
+        if (qrReader) qrReader.classList.add('hidden');
+        if (faceVideo) faceVideo.classList.remove('hidden');
+        if (faceOverlay) faceOverlay.classList.remove('hidden');
+        if (placeholder) placeholder.style.display = 'none';
+        showToast("Mode Scan Wajah aktif. Klik Nyalakan Kamera untuk mulai.", "success");
+      } else {
+        if (qrReader) qrReader.classList.remove('hidden');
+        if (faceVideo) faceVideo.classList.add('hidden');
+        if (faceOverlay) faceOverlay.classList.add('hidden');
+        if (placeholder && !isCameraActive) placeholder.style.display = 'block';
+      }
+    }
+
+    async function startFaceScan() {
+      if (!isFaceApiReady()) {
+        showToast("Face recognition tidak tersedia. Kembali ke mode QR.", "error");
+        setScanMethod('qr');
+        return;
+      }
+      try {
+        await loadFaceModels();
+      } catch(e) {
+        showToast("Gagal memuat model face recognition. Kembali ke mode QR.", "error");
+        setScanMethod('qr');
+        return;
+      }
+      const video = document.getElementById('face-video');
+      if (!video) return;
+      try {
+        faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        video.srcObject = faceStream;
+        await video.play();
+        isFaceActive = true;
+        const btn = document.getElementById('camera-btn-text');
+        if (btn) btn.innerText = "Matikan Kamera";
+        setGeneralScanResult('waiting');
+        showToast("Kamera wajah aktif. Arahkan wajah siswa ke kamera.", "success");
+        if (faceDetectTimer) clearInterval(faceDetectTimer);
+        faceDetectTimer = setInterval(faceDetectTick, 800);
+      } catch(err) {
+        console.error("Kamera wajah error:", err);
+        showToast("Tidak dapat mengakses kamera untuk scan wajah.", "error");
+        isFaceActive = false;
+      }
+    }
+
+    function stopFaceScan() {
+      if (faceDetectTimer) { clearInterval(faceDetectTimer); faceDetectTimer = null; }
+      if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
+      const video = document.getElementById('face-video');
+      if (video) video.srcObject = null;
+      const canvas = document.getElementById('face-overlay');
+      if (canvas) { const ctx = canvas.getContext('2d'); if (ctx) ctx.clearRect(0,0,canvas.width,canvas.height); }
+      if (isFaceActive) {
+        isFaceActive = false;
+        const btn = document.getElementById('camera-btn-text');
+        if (btn) btn.innerText = "Nyalakan Kamera";
+        setGeneralScanResult('waiting');
+      }
+    }
+
+    async function faceDetectTick() {
+      if (!isFaceActive || currentScanMethod !== 'face' || !isFaceApiReady()) return;
+      const video = document.getElementById('face-video');
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      try {
+        const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+          .withFaceLandmarks().withFaceDescriptor();
+        const canvas = document.getElementById('face-overlay');
+        if (canvas) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (det) {
+            const box = det.detection.box;
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+          }
+        }
+        if (!det) return;
+        const match = matchFaceDescriptor(det.descriptor);
+        if (!match) {
+          setGeneralScanResult('unknown', '', '', "Wajah tidak dikenali / belum terdaftar di Data Siswa");
+          return;
+        }
+        // Debounce: wajah yang sama tidak diproses ulang dalam 3 detik
+        const now = Date.now();
+        if (String(match.id) === lastFaceScanId && (now - lastFaceScanTime) < 3000) return;
+        lastFaceScanId = String(match.id);
+        lastFaceScanTime = now;
+        if (typeof playBeep === 'function') playBeep('success');
+        // === REUSE fungsi pencatatan absen yang sudah ada (sama seperti QR) ===
+        recordAttendanceDirect(match.id, match.nama, match.kelas, currentScanMode, currentJenisAbsen, match.peran, 'Wajah');
+      } catch(e) {
+        console.warn("Face detect tick error:", e);
+      }
+    }
+
+    function matchFaceDescriptor(descriptor) {
+      let best = null, bestDist = Infinity;
+      // Kandidat: Siswa (key = NISN) DAN Guru (key = NIP)
+      const kandidat = [];
+      for (const s of students) kandidat.push({ id: s.nisn, nama: s.nama, kelas: s.kelas, peran: 'Siswa' });
+      for (const g of teachers) kandidat.push({ id: g.nip, nama: g.nama, kelas: g.kelas || 'Guru/Staf', peran: 'Guru' });
+      for (const k of kandidat) {
+        let raw = null;
+        try { raw = localStorage.getItem('face_desc_' + String(k.id)); } catch(e){}
+        if (!raw) continue;
+        try {
+          const stored = new Float32Array(JSON.parse(raw));
+          const dist = faceapi.euclideanDistance(descriptor, stored);
+          if (dist < bestDist) { bestDist = dist; best = k; }
+        } catch(e){}
+      }
+      return (best && bestDist <= FACE_MATCH_THRESHOLD)
+        ? { id: best.id, nama: best.nama, kelas: best.kelas, peran: best.peran }
+        : null;
+    }
+
+    /* ---------- Pendaftaran wajah siswa (enroll) ---------- */
+    function openFaceEnroll(id, tipe = 'Siswa') {
+      enrollNisn = String(id);
+      const modal = document.getElementById('modal-face-enroll');
+      if (modal) modal.classList.remove('hidden');
+      const info = document.getElementById('face-enroll-info');
+      let orang = null;
+      if (tipe === 'Guru') orang = teachers.find(g => String(g.nip) === enrollNisn);
+      else orang = students.find(s => String(s.nisn) === enrollNisn);
+      if (info) info.innerHTML = "Daftarkan wajah " + tipe + ": <b>" + (orang ? orang.nama : 'ID ' + id) + "</b> (" + enrollNisn + ")";
+      startEnrollCamera();
+    }
+
+    function closeFaceEnroll() {
+      stopEnrollCamera();
+      const modal = document.getElementById('modal-face-enroll');
+      if (modal) modal.classList.add('hidden');
+      enrollNisn = null;
+    }
+
+    async function startEnrollCamera() {
+      const loading = document.getElementById('face-enroll-loading');
+      if (loading) { loading.style.display = 'flex'; loading.innerText = "Memuat model face recognition & kamera...\n(pertama kali butuh koneksi internet)"; }
+      if (!isFaceApiReady()) {
+        if (loading) loading.innerText = "Library face recognition belum termuat. Periksa koneksi internet, tutup lalu buka lagi.";
+        return;
+      }
+      try {
+        await loadFaceModels();
+        const video = document.getElementById('face-enroll-video');
+        enrollStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        video.srcObject = enrollStream;
+        await video.play();
+        if (loading) loading.style.display = 'none';
+      } catch(err) {
+        console.error("Enroll camera error:", err);
+        if (loading) loading.innerText = "Gagal membuka kamera / memuat model. Tutup & coba lagi.";
+        showToast("Gagal membuka kamera atau memuat model.", "error");
+      }
+    }
+
+    function stopEnrollCamera() {
+      if (enrollStream) { enrollStream.getTracks().forEach(t => t.stop()); enrollStream = null; }
+      const v = document.getElementById('face-enroll-video');
+      if (v) v.srcObject = null;
+    }
+
+    async function captureFaceEnroll() {
+      if (!enrollNisn) return;
+      if (!isFaceApiReady()) { showToast("Library face recognition belum siap.", "error"); return; }
+      const video = document.getElementById('face-enroll-video');
+      if (!video || video.readyState < 2 || !video.videoWidth) { showToast("Kamera belum siap.", "error"); return; }
+      try {
+        const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+          .withFaceLandmarks().withFaceDescriptor();
+        if (!det) { showToast("Wajah tidak terdeteksi. Pastikan wajah terlihat jelas & cukup cahaya.", "error"); return; }
+        // ==== GUARD: SATU WAJAH HANYA BOLEH UNTUK SATU ORANG (siswa & guru) ====
+        // Daftar ulang untuk ORANG YANG SAMA diizinkan (menimpa / last-win).
+        // Jika wajah cocok dengan orang LAIN yang sudah terdaftar -> ditolak.
+        const ENROLL_DUP_THRESHOLD = 0.50;
+        const semuaOrang = [];
+        for (const s of students) semuaOrang.push({ id: s.nisn, nama: s.nama, tipe: 'Siswa' });
+        for (const g of teachers) semuaOrang.push({ id: g.nip, nama: g.nama, tipe: 'Guru' });
+        let pemilikLama = null, jarakTerdekat = Infinity;
+        for (const o of semuaOrang) {
+          if (String(o.id) === String(enrollNisn)) continue; // milik sendiri => boleh ditimpa
+          let raw = null;
+          try { raw = localStorage.getItem('face_desc_' + String(o.id)); } catch(e){}
+          if (!raw) continue;
+          try {
+            const stored = new Float32Array(JSON.parse(raw));
+            const dist = faceapi.euclideanDistance(det.descriptor, stored);
+            if (dist < jarakTerdekat) { jarakTerdekat = dist; pemilikLama = o; }
+          } catch(e){}
+        }
+        if (pemilikLama && jarakTerdekat <= ENROLL_DUP_THRESHOLD) {
+          if (typeof playBeep === 'function') playBeep('error');
+          showToast("Wajah ini SUDAH terdaftar atas nama " + pemilikLama.nama + " (" + pemilikLama.tipe + "). Satu wajah hanya boleh untuk satu orang. Hapus dulu data wajah yang lama jika ingin memindahkan.", "error");
+          return;
+        }
+        // ==== AKHIR GUARD ====
+        localStorage.setItem('face_desc_' + enrollNisn, JSON.stringify(Array.from(det.descriptor)));
+        // Tandai di objek siswa (TIDAK dikirim ke backend — aman untuk schema GAS)
+        const idx = students.findIndex(s => String(s.nisn) === enrollNisn);
+        if (idx !== -1) students[idx].faceRegistered = true;
+        if (typeof playBeep === 'function') playBeep('success');
+        showToast("Wajah berhasil didaftarkan!", "success");
+        if (typeof renderSiswaTable === 'function') renderSiswaTable(); // refresh ikon status
+        closeFaceEnroll();
+      } catch(e) {
+        console.error("Capture enroll error:", e);
+        showToast("Gagal mendaftarkan wajah. Coba lagi.", "error");
+      }
+    }
+    /* ---------- Hapus data wajah (untuk membersihkan duplikat / memindahkan wajah) ---------- */
+    function clearFaceData(id) {
+      try { localStorage.removeItem('face_desc_' + String(id)); } catch(e){}
+      const idxS = students.findIndex(s => String(s.nisn) === String(id));
+      if (idxS !== -1) delete students[idxS].faceRegistered;
+      const idxG = teachers.findIndex(g => String(g.nip) === String(id));
+      if (idxG !== -1) delete teachers[idxG].faceRegistered;
+      showToast("Data wajah berhasil dihapus. Silakan daftarkan ulang.", "success");
+      if (typeof renderSiswaTable === 'function') renderSiswaTable();
+      if (typeof renderGuruTable === 'function') renderGuruTable();
+    }
+
+    /* ---------- Scan Wajah di Agenda Kelas (login Guru) - TAMBAHAN ---------- */
+    let currentAgendaMethod = 'qr';
+    let isAgendaFaceActive = false;
+    let agendaFaceStream = null;
+    let agendaFaceTimer = null;
+    let lastAgendaFaceId = '';
+    let lastAgendaFaceTime = 0;
+
+    function setAgendaScanMethod(method) {
+      if (method === currentAgendaMethod) return;
+      if (currentAgendaMethod === 'qr' && typeof isAgendaCamActive !== 'undefined' && isAgendaCamActive) { try { stopCameraAgenda(); } catch(e){} }
+      if (currentAgendaMethod === 'face' && isAgendaFaceActive) { stopAgendaFaceScan(); }
+      currentAgendaMethod = method;
+      const activeCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-emerald-600 bg-emerald-600 text-white shadow-xs";
+      const inactiveCls = "py-2 px-2 rounded-xl border text-xs font-bold text-center border-slate-200 bg-white text-slate-700";
+      const qrBtn = document.getElementById('method-agenda-qr');
+      const faceBtn = document.getElementById('method-agenda-face');
+      if (qrBtn) qrBtn.className = (method === 'qr') ? activeCls : inactiveCls;
+      if (faceBtn) faceBtn.className = (method === 'face') ? activeCls : inactiveCls;
+      const qrReader = document.getElementById('qr-reader-agenda');
+      const faceVideo = document.getElementById('face-video-agenda');
+      const faceOverlay = document.getElementById('face-overlay-agenda');
+      const placeholder = document.getElementById('qr-placeholder-agenda');
+      if (method === 'face') {
+        if (qrReader) qrReader.classList.add('hidden');
+        if (faceVideo) faceVideo.classList.remove('hidden');
+        if (faceOverlay) faceOverlay.classList.remove('hidden');
+        if (placeholder) placeholder.style.display = 'none';
+        showToast("Mode Wajah di Agenda Kelas aktif. Klik Nyalakan Kamera.", "success");
+      } else {
+        if (qrReader) qrReader.classList.remove('hidden');
+        if (faceVideo) faceVideo.classList.add('hidden');
+        if (faceOverlay) faceOverlay.classList.add('hidden');
+        if (placeholder && !isAgendaCamActive) placeholder.style.display = 'block';
+      }
+    }
+
+    async function startAgendaFaceScan() {
+      if (!isFaceApiReady()) { showToast("Face recognition tidak tersedia.", "error"); setAgendaScanMethod('qr'); return; }
+      try { await loadFaceModels(); } catch(e) { showToast("Gagal memuat model face recognition.", "error"); setAgendaScanMethod('qr'); return; }
+      const video = document.getElementById('face-video-agenda');
+      if (!video) return;
+      try {
+        agendaFaceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        video.srcObject = agendaFaceStream;
+        await video.play();
+        isAgendaFaceActive = true;
+        const btn = document.getElementById('agenda-camera-btn-text');
+        if (btn) btn.innerText = "Matikan Kamera";
+        showToast("Kamera wajah agenda aktif. Arahkan wajah siswa.", "success");
+        if (agendaFaceTimer) clearInterval(agendaFaceTimer);
+        agendaFaceTimer = setInterval(agendaFaceDetectTick, 800);
+      } catch(err) {
+        console.error("Agenda face camera error:", err);
+        showToast("Tidak dapat mengakses kamera wajah.", "error");
+        isAgendaFaceActive = false;
+      }
+    }
+
+    function stopAgendaFaceScan() {
+      if (agendaFaceTimer) { clearInterval(agendaFaceTimer); agendaFaceTimer = null; }
+      if (agendaFaceStream) { agendaFaceStream.getTracks().forEach(t => t.stop()); agendaFaceStream = null; }
+      const v = document.getElementById('face-video-agenda');
+      if (v) v.srcObject = null;
+      const c = document.getElementById('face-overlay-agenda');
+      if (c) { const ctx = c.getContext('2d'); if (ctx) ctx.clearRect(0, 0, c.width, c.height); }
+      if (isAgendaFaceActive) {
+        isAgendaFaceActive = false;
+        const btn = document.getElementById('agenda-camera-btn-text');
+        if (btn) btn.innerText = "Nyalakan Kamera";
+      }
+    }
+
+    async function agendaFaceDetectTick() {
+      if (!isAgendaFaceActive || currentAgendaMethod !== 'face' || !isFaceApiReady()) return;
+      const video = document.getElementById('face-video-agenda');
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      const resEl = document.getElementById('agenda-scan-result');
+      try {
+        const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+          .withFaceLandmarks().withFaceDescriptor();
+        const canvas = document.getElementById('face-overlay-agenda');
+        if (canvas) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (det) {
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3;
+            const b = det.detection.box;
+            ctx.strokeRect(b.x, b.y, b.width, b.height);
+          }
+        }
+        if (!det) return;
+        const match = matchFaceDescriptor(det.descriptor);
+        if (!match) {
+          if (resEl) resEl.innerHTML = '<div class="text-amber-600 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i><br>Wajah tidak dikenali / belum terdaftar</div>';
+          return;
+        }
+        if (match.peran !== 'Siswa') {
+          if (resEl) resEl.innerHTML = '<div class="text-slate-500 font-bold text-sm"><i class="fa-solid fa-user-tie text-xl mb-1"></i><br>' + match.nama + ' (Guru) tidak perlu absen siswa</div>';
+          return;
+        }
+        // Cek kelas sesuai agenda (sama persis seperti proses scan QR agenda)
+        const targetKelas = getActiveTeacherClass();
+        if (targetKelas !== 'Semua' && match.kelas !== targetKelas) {
+          if (typeof playBeep === 'function') playBeep('error');
+          showToast("Peringatan: Siswa dari kelas " + match.kelas + " (bukan kelas " + targetKelas + ")", "error");
+          if (resEl) resEl.innerHTML = '<div class="text-rose-600 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i><br>' + match.nama + ' dari kelas ' + match.kelas + '</div>';
+          return;
+        }
+        const now = Date.now();
+        if (String(match.id) === lastAgendaFaceId && (now - lastAgendaFaceTime) < 3000) return;
+        lastAgendaFaceId = String(match.id);
+        lastAgendaFaceTime = now;
+        const mapelName = (document.getElementById('agenda-mapel') ? document.getElementById('agenda-mapel').value : '') || (currentLoggedTeacher ? currentLoggedTeacher.jabatan : '') || 'Pelajaran';
+        if (typeof playBeep === 'function') playBeep('success');
+        // Reuse fungsi pencatatan yang sama (method = Wajah)
+        recordAttendanceDirect(match.id, match.nama, match.kelas, 'Hadir', mapelName, 'Siswa', 'Wajah');
+      } catch(e) {
+        console.warn("Agenda face detect error:", e);
+      }
+    }
+
+    /* ============================================================
+       AKHIR FITUR SCAN WAJAH
+       ============================================================ */
+
   </script>
 </body>
 </html>

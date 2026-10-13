@@ -1161,7 +1161,7 @@
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20247282', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -3456,7 +3456,7 @@
         // ==== GUARD: SATU WAJAH HANYA BOLEH UNTUK SATU ORANG (siswa & guru) ====
         // Daftar ulang untuk ORANG YANG SAMA diizinkan (menimpa / last-win).
         // Jika wajah cocok dengan orang LAIN yang sudah terdaftar -> ditolak.
-        const ENROLL_DUP_THRESHOLD = 0.50;
+        const ENROLL_DUP_THRESHOLD = 0.45; // diturunkan dari 0.50 agar orang berbeda tidak salah terblokir
         const semuaOrang = [];
         for (const s of students) semuaOrang.push({ id: s.nisn, nama: s.nama, tipe: 'Siswa' });
         for (const g of teachers) semuaOrang.push({ id: g.nip, nama: g.nama, tipe: 'Guru' });
@@ -3474,8 +3474,17 @@
         }
         if (pemilikLama && jarakTerdekat <= ENROLL_DUP_THRESHOLD) {
           if (typeof playBeep === 'function') playBeep('error');
-          showToast("Wajah ini SUDAH terdaftar atas nama " + pemilikLama.nama + " (" + pemilikLama.tipe + "). Satu wajah hanya boleh untuk satu orang. Hapus dulu data wajah yang lama jika ingin memindahkan.", "error");
-          return;
+          // Bukan blokir keras: beri peringatan + opsi override (bisa jadi orang berbeda yang wajahnya mirip)
+          var tetapDaftar = confirm(
+            "PERINGATAN: Wajah ini MIRIP dengan " + pemilikLama.nama + " (" + pemilikLama.tipe + ").\n\n" +
+            "Jika ini memang orang yang SAMA -> klik Batal.\n" +
+            "Jika yakin ini orang BERBEDA (hanya mirip) -> klik OK untuk tetap mendaftarkan."
+          );
+          if (!tetapDaftar) {
+            showToast("Pendaftaran wajah dibatalkan.", "error");
+            return;
+          }
+          showToast("Wajah didaftarkan dengan override (mirip " + pemilikLama.nama + ").", "success");
         }
         // ==== AKHIR GUARD ====
         localStorage.setItem('face_desc_' + enrollNisn, JSON.stringify(Array.from(det.descriptor)));

@@ -158,7 +158,7 @@
     /* ============ KARTU BAGIAN BELAKANG (teks DIPUTAR 90° / landscape) - MODERN ============ */
     .kts-card-back {
       width: 54mm;
-      height: 82mm;
+      height: 85mm;
       background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
       border-radius: 12px;
       overflow: hidden;
@@ -366,7 +366,7 @@
         align-items: flex-start !important;
         gap: 8mm !important;
         margin-bottom: 6mm !important;
-        height: 82mm !important;
+        height: 85mm !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         overflow: hidden !important;
@@ -382,7 +382,7 @@
         flex: 0 0 54mm !important;
         width: 54mm !important;
         max-width: 54mm !important;
-        height: 82mm !important;
+        height: 85mm !important;
         margin: 0 !important;
         box-shadow: none !important;
         border: 1px solid #cbd5e1 !important;
@@ -481,7 +481,7 @@
         align-items: flex-start !important;
         gap: 8mm !important;
         margin-bottom: 6mm !important;
-        height: 82mm !important;
+        height: 85mm !important;
       }
       .print-row:last-child,
       .print-row:last-of-type {
@@ -492,7 +492,7 @@
         flex: 0 0 54mm !important;
         width: 54mm !important;
         max-width: 54mm !important;
-        height: 82mm !important;
+        height: 85mm !important;
         margin: 0 !important;
       }
     }
@@ -1161,7 +1161,7 @@
     const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e2e8f0'/><circle cx='50' cy='40' r='22' fill='%2394a3b8'/><path d='M15 90c0-19.3 15.7-35 35-35s35 15.7 35 35z' fill='%2394a3b8'/></svg>";
 
     let students = [], teachers = [], attendanceLogs = [], classList = [], adminUsers = [];
-    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20247282', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
+    let schoolProfile = { namaSekolah:'SMP Islam Darussalam', npsn:'20123456', alamat:'Jl. Pendidikan No. 45', logoUrl:'' };
     let currentUserRole = null;
     let currentLoggedTeacher = null;
     let currentScanMode = 'Hadir', currentJenisAbsen = 'Masuk Sekolah';
@@ -3201,6 +3201,9 @@
     let lastFaceScanTime = 0;
     let lastUnknownNotify = 0; // debounce notif wajah belum terdaftar
     let enrollTipe = 'Siswa';
+    // Verifikasi 2 frame berurutan (cegah 1 frame noise salah catat orang lain)
+    let pendingFaceId = '', pendingFaceCount = 0;
+    let pendingAgendaFaceId = '', pendingAgendaFaceCount = 0;
     let enrollStream = null;
     let enrollNisn = null;
     // --- Optimasi responsif mobile (HP) ---
@@ -3351,6 +3354,7 @@
         if (!det) return;
         const match = matchFaceDescriptor(det.descriptor);
         if (!match) {
+          pendingFaceId = ''; pendingFaceCount = 0;
           setGeneralScanResult('unknown', '', '', "Wajah tidak dikenali / belum terdaftar di Data Siswa");
           const _nowU = Date.now();
           if (_nowU - lastUnknownNotify > 6000) {
@@ -3360,7 +3364,27 @@
           }
           return;
         }
-        // Debounce: wajah yang sama tidak diproses ulang dalam 3 detik
+        // === VERIFIKASI 2 FRAME BERURUTAN: cegah 1 frame noise salah catat orang lain ===
+        const RECORD_THRESHOLD = 0.50; // lebih ketat dari threshold deteksi (0.55)
+        const MARGIN_MIN = 0.03;       // jarak ke orang terdekat kedua harus cukup tegas
+        const cukupTegas = match.dist <= RECORD_THRESHOLD && (match.secondDist - match.dist) >= MARGIN_MIN;
+        if (!cukupTegas) {
+          pendingFaceId = ''; pendingFaceCount = 0;
+          setGeneralScanResult('unknown', match.nama, '', "Wajah kurang tegas / mirip dengan orang lain. Dekatkan wajah & pastikan cukup cahaya.");
+          return;
+        }
+        if (match.id !== pendingFaceId) {
+          pendingFaceId = match.id; pendingFaceCount = 1;
+          setGeneralScanResult('processing', match.nama, '', "Mencocokkan wajah (1/2) — tetap diam...");
+          return;
+        }
+        pendingFaceCount++;
+        if (pendingFaceCount < 2) {
+          setGeneralScanResult('processing', match.nama, '', "Mencocokkan wajah (2/2) — tetap diam...");
+          return;
+        }
+        pendingFaceId = ''; pendingFaceCount = 0;
+        // Lolos verifikasi -> debounce & catat
         const now = Date.now();
         if (String(match.id) === lastFaceScanId && (now - lastFaceScanTime) < 3000) return;
         lastFaceScanId = String(match.id);
@@ -3376,7 +3400,7 @@
     }
 
     function matchFaceDescriptor(descriptor) {
-      let best = null, bestDist = Infinity;
+      let best = null, bestDist = Infinity, secondDist = Infinity;
       // Kandidat: Siswa (key = NISN) DAN Guru (key = NIP)
       const kandidat = [];
       for (const s of students) kandidat.push({ id: s.nisn, nama: s.nama, kelas: s.kelas, peran: 'Siswa' });
@@ -3388,12 +3412,14 @@
         try {
           const stored = new Float32Array(JSON.parse(raw));
           const dist = faceapi.euclideanDistance(descriptor, stored);
-          if (dist < bestDist) { bestDist = dist; best = k; }
+          if (dist < bestDist) { secondDist = bestDist; bestDist = dist; best = k; }
+          else if (dist < secondDist) { secondDist = dist; }
         } catch(e){}
       }
-      return (best && bestDist <= FACE_MATCH_THRESHOLD)
-        ? { id: best.id, nama: best.nama, kelas: best.kelas, peran: best.peran }
-        : null;
+      if (best && bestDist <= FACE_MATCH_THRESHOLD) {
+        return { id: best.id, nama: best.nama, kelas: best.kelas, peran: best.peran, dist: bestDist, secondDist: (secondDist === Infinity ? 99 : secondDist) };
+      }
+      return null;
     }
 
     /* ---------- Pendaftaran wajah siswa (enroll) ---------- */
@@ -3621,6 +3647,7 @@
         const match = matchFaceDescriptor(det.descriptor);
         if (!match) {
           if (resEl) resEl.innerHTML = '<div class="text-amber-600 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i><br>Wajah tidak dikenali / belum terdaftar</div>';
+          pendingAgendaFaceId = ''; pendingAgendaFaceCount = 0;
           const _nowU = Date.now();
           if (_nowU - lastUnknownNotify > 6000) {
             lastUnknownNotify = _nowU;
@@ -3641,6 +3668,26 @@
           if (resEl) resEl.innerHTML = '<div class="text-rose-600 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i><br>' + match.nama + ' dari kelas ' + match.kelas + '</div>';
           return;
         }
+        // === VERIFIKASI 2 FRAME BERURUTAN (agenda) ===
+        const RECORD_THRESHOLD_A = 0.50;
+        const MARGIN_MIN_A = 0.03;
+        const cukupTegasA = match.dist <= RECORD_THRESHOLD_A && (match.secondDist - match.dist) >= MARGIN_MIN_A;
+        if (!cukupTegasA) {
+          pendingAgendaFaceId = ''; pendingAgendaFaceCount = 0;
+          if (resEl) resEl.innerHTML = '<div class="text-amber-600 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation text-xl mb-1"></i><br>Wajah kurang tegas. Dekatkan & pastikan cukup cahaya.</div>';
+          return;
+        }
+        if (match.id !== pendingAgendaFaceId) {
+          pendingAgendaFaceId = match.id; pendingAgendaFaceCount = 1;
+          if (resEl) resEl.innerHTML = '<div class="text-indigo-600 font-bold text-sm"><i class="fa-solid fa-circle-notch fa-spin text-xl mb-1"></i><br>Mencocokkan wajah (1/2) — tetap diam...</div>';
+          return;
+        }
+        pendingAgendaFaceCount++;
+        if (pendingAgendaFaceCount < 2) {
+          if (resEl) resEl.innerHTML = '<div class="text-indigo-600 font-bold text-sm"><i class="fa-solid fa-circle-notch fa-spin text-xl mb-1"></i><br>Mencocokkan wajah (2/2) — tetap diam...</div>';
+          return;
+        }
+        pendingAgendaFaceId = ''; pendingAgendaFaceCount = 0;
         const now = Date.now();
         if (String(match.id) === lastAgendaFaceId && (now - lastAgendaFaceTime) < 3000) return;
         lastAgendaFaceId = String(match.id);
